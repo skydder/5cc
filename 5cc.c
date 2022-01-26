@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 
+
 typedef enum {
     TK_RESERVED,
     TK_NUM,
@@ -89,7 +90,7 @@ Token *tokenize(char *p) {
 	    continue;
 	}
 
-	if (*p == '+' || *p == '-') {
+	if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' ||*p == ')') {
 	    cur = new_token(TK_RESERVED, cur, p++);
 	    continue;
 	}
@@ -123,6 +124,10 @@ struct Node {
     Node *rhs;
     int val;
 };
+
+Node *primary();
+Node *expr();
+Node *mul();
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
     Node *node = calloc(1, sizeof(Node));
