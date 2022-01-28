@@ -8,7 +8,6 @@
 #include "5cc.h"
 
 Token *token;
-
 char *user_input; 
 
 int main(int argc, char **argv) {
