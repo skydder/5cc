@@ -4,3 +4,4 @@ tmp*
 a.out
 5cc
 .vscode
+test.c

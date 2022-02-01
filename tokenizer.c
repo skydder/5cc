@@ -2,19 +2,22 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "5cc.h"
 
 bool consume(char op) {
-    if (token->kind != TK_RESERVED || token->str[0] != op) 
-	    return false;
+    if (token->kind != TK_RESERVED || token->str[0] != op){
+        return false;
+    }
     token = token->next;
     return true;
 }
 
 void expect(char op) {
-    if (token->kind != TK_RESERVED || token->str[0] != op)
-	    error_at(token->str, "'%c'ではありません", op);
+    if (token->kind != TK_RESERVED || token->str[0] != op){
+        error_at(token->str, "'%c'ではありません", op);
+    }
     token = token->next;
 }
 
@@ -44,23 +47,23 @@ Token *tokenize(char *p) {
     Token *cur = &head;
 
     while (*p) {
-	if (isspace(*p)) {
-	    p++;
-	    continue;
-	}
+        if (isspace(*p)) {
+	        p++;
+	        continue;
+	    }
 
-	if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' ||*p == ')') {
-	    cur = new_token(TK_RESERVED, cur, p++);
-	    continue;
-	}
+    if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' ||*p == ')') {
+	        cur = new_token(TK_RESERVED, cur, p++);
+	        continue;
+	    }
 
-	if (isdigit(*p)) {
-	    cur = new_token(TK_NUM, cur, p);
-	    cur->val = strtol(p, &p, 10);
-	    continue;
-	}
+	    if (isdigit(*p)) {
+	        cur = new_token(TK_NUM, cur, p);
+	        cur->val = strtol(p, &p, 10);
+	        continue;
+	    }
 
-	error_at(cur->str, "トークナイズトークナイズできませんできません");
+    	error_at(cur->str, "トークナイズトークナイズできませんできません");
     }
 
     new_token(TK_EOF, cur, p);
