@@ -18,13 +18,50 @@ Node *new_node_num(int val) {
     return node;
 }
 
-Node *expr() {
+Node *expr(){
+    Node *node = equal();
+    return node;
+}
+
+Node *equal(){
+    Node *node = relation();
+
+    for (;;) {
+        if (consume("!=")) {
+            node = new_node(ND_NEQ, node, relation());
+        } else if (consume("==")) {
+            node = new_node(ND_EQ, node, relation());
+        } else {
+            return node;
+        }
+    }
+}
+
+Node *relation(){
+    Node *node = add();
+
+    for (;;) {
+        if (consume("<=")) {
+            node = new_node(ND_LTE, node, add());
+        } else if (consume("<")) {
+            node = new_node(ND_LT, node, add());
+        } else if (consume(">=")) {
+            node = new_node(ND_GTE, node, add());
+        } else if (consume(">")) {
+            node = new_node(ND_GT, node, add());
+        } else {
+            return node;
+        }
+    }
+}
+
+Node *add() {
     Node *node = mul();
 
     for (;;) {
-        if (consume('+'))
+        if (consume("+"))
             node = new_node(ND_ADD, node, mul());
-        else  if (consume('-'))
+        else  if (consume("-"))
             node = new_node(ND_SUB, node, mul());
         else
             return node;
@@ -35,9 +72,9 @@ Node *mul() {
     Node *node = unary();
 
     for (;;) {
-        if (consume('*'))
+        if (consume("*"))
             node = new_node(ND_MUL, node, unary());
-        else if (consume('/'))
+        else if (consume("/"))
             node = new_node(ND_DIV, node, unary());
         else
             return node;
@@ -45,17 +82,17 @@ Node *mul() {
 }
 
 Node *unary() {
-    if (consume('+'))
+    if (consume("+"))
         return primary();
-    if (consume('-'))
+    if (consume("-"))
         return new_node(ND_SUB, new_node_num(0), primary());
     return primary();
 }
 
 Node *primary() {
-    if (consume('(')) {
+    if (consume("(")) {
         Node *node = expr();
-        expect(')');
+        expect(")");
         return node;
     }
 
@@ -87,6 +124,36 @@ void gen(Node *node) {
         case ND_DIV:
             printf("\tcqo\n");
             printf("\tidiv rdi\n");
+            break;
+        case ND_LT://<
+            printf("\tcmp rax, rdi\n");
+            printf("\tsetl al\n");
+            printf("\tmovzb rax, al\n");
+            break;
+        case ND_LTE://<=
+            printf("\tcmp rax, rdi\n");
+            printf("\tsetle al\n");
+            printf("\tmovzb rax, al\n");
+            break;
+        case ND_GT://>
+            printf("\tcmp rdi, rax\n");
+            printf("\tsetl al\n");
+            printf("\tmovzb rax, al\n");
+            break;
+        case ND_GTE://>=
+            printf("\tcmp rdi, rax\n");
+            printf("\tsetle al\n");
+            printf("\tmovzb rax, al\n");
+            break;
+        case ND_EQ://==
+            printf("\tcmp rax, rdi\n");
+            printf("\tsete al\n");
+            printf("\tmovzb rax, al\n");
+            break;
+        case ND_NEQ://!=
+            printf("\tcmp rax, rdi\n");
+            printf("\tsetne al\n");
+            printf("\tmovzb rax, al\n");
             break;
     }
 

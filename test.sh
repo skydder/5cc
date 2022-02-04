@@ -29,4 +29,10 @@ assert 4 '(3+5)/2'
 
 assert 10 '-10+20'
 
+assert 1  '12 < 20'
+assert 1 '20 == 20'
+assert 0 '12 > 20'
+assert 0 '12 >= 20'
+assert 1 '5*(9-6) >= (3+5)/2'
+
 echo OK
