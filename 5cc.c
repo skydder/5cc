@@ -8,7 +8,8 @@
 #include "5cc.h"
 
 Token *token;
-char *user_input; 
+char *user_input;
+Node *code[100];
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -18,15 +19,23 @@ int main(int argc, char **argv) {
     
     user_input = argv[1];
     token = tokenize(user_input);
-    Node *node = expr();
+    program();
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
     printf("main:\n");
 
-    gen(node);
+    printf("\tpush rbp\n");
+    printf("\tmov rbp, rsp\n");
+    printf("\tsub rsp, 208\n");
 
-    printf("\tpop rax\n");
+    for (int i = 0; code[i]; i++) {
+        gen(code[i]);
+        printf("\tpop rax\n");
+    }
+    
+    printf("\tmov rsp, rbp\n");
+    printf("\tpop rbp\n");
     printf("\tret\n");
     return 0;
 }

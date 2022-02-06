@@ -18,8 +18,31 @@ Node *new_node_num(int val) {
     return node;
 }
 
+Node *code[100];
+
+void program() {
+    int i = 0;
+    while (!at_eof()) {
+        code[i++] = stmt();
+    }
+    code[i] = NULL;
+}
+
+Node *stmt() {
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
 Node *expr(){
+    return assign();
+}
+
+Node *assign() {
     Node *node = equal();
+    if (consume("=")) {
+        node = new_node(ND_ASSIGN, node, assign());
+    }
     return node;
 }
 
@@ -96,13 +119,48 @@ Node *primary() {
         return node;
     }
 
+    Token *tok = consume_indent();
+    if (tok) {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        node->offset = (tok->str[0] - 'a' + 1) * 8;
+        token = token->next;
+        return node;
+    }
     return new_node_num(expect_number());
 }
 
+void gen_lval(Node *node) {
+    if (node->kind != ND_LVAR) {
+        error("代入の左辺値が変数ではありません");
+    }
+
+    printf("\tmov rax, rbp\n");
+    printf("\tsub rax, %d\n", node->offset);
+    printf("\tpush rax\n");
+}
+
 void gen(Node *node) {
-    if (node->kind == ND_NUM) {
-        printf("\tpush %d\n", node->val);
-        return;
+    //if (node->kind == ND_NUM) {printf("\tpush %d\n", node->val);return;}
+    switch (node->kind) {
+        case ND_NUM:
+            printf("\tpush %d\n", node->val);
+            return;
+        case ND_LVAR:
+            gen_lval(node);
+            printf("\tpop rax\n");
+            printf("\tmov rax, [rax]\n");
+            printf("\tpush rax\n");
+            return;
+        case ND_ASSIGN:
+            gen_lval(node->lhs);
+            gen(node->rhs);
+
+            printf("\tpop rdi\n");
+            printf("\tpop rax\n");
+            printf("\tmov [rax], rdi\n");
+            printf("\tpush rdi\n");
+            return;
     }
 
     gen(node->lhs);
