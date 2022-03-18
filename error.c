@@ -7,10 +7,10 @@
 void error_at(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    int pos = loc - user_input;
+    int pos = (loc - user_input) / sizeof(char);
 
     fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", pos, " ");
+    fprintf(stderr, "%*s", pos, "");
     fprintf(stderr, "^ ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");

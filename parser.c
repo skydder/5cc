@@ -123,7 +123,15 @@ Node *primary() {
     if (tok) {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
-        node->offset = (tok->str[0] - 'a' + 1) * 8;
+        
+        LVar *lvar = find_lvar(tok);
+        if (lvar) {
+            node->offset = lvar->offset;
+        } else {
+            lvar = new_lvar(tok->str, tok->len, locals);
+            node->offset = lvar->offset;
+            locals = lvar;
+        }
         token = token->next;
         return node;
     }

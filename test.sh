@@ -36,4 +36,8 @@ assert 0 '12 >= 20;'
 assert 1 '5*(9-6) >= (3+5)/2;'
 
 assert 3 'a = 2; a + 1;'
+assert 10 "te = 3; wh = 3; te * wh + wh / te;"
+assert 10 "test = 3; white = 3; test * white + white / test;"
+assert 3 "tes = 3; tes;"
+assert 7 "tes = 3; tes = 7; tes;"
 echo OK

@@ -12,6 +12,7 @@ typedef enum {
     TK_RESERVED,
     TK_IDENT,
     TK_NUM,
+    TK_RETURN,
     TK_EOF,
 } TokenKind;
 
@@ -40,6 +41,15 @@ typedef enum {
     ND_NEQ,
 } NodeKind;
 
+typedef struct LVar LVar;
+
+struct LVar {
+    LVar *next;
+    char *name;
+    int len;
+    int offset;
+};
+
 typedef struct Node Node;
 struct Node {
     NodeKind kind;
@@ -61,9 +71,12 @@ Token *consume_indent();
 void expect(char *op);
 int expect_number();
 bool at_eof();
+LVar *new_lvar(char *name, int len, LVar *next);
+LVar *find_lvar(Token *tok);
 Token *new_token(TokenKind kind, Token *cur, char *str);
 Token *tokenize(char *p);
 extern Token *token;
+extern LVar *locals;
 
 //-parser
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);

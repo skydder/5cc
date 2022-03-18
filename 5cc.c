@@ -1,3 +1,4 @@
+//#include <cstddef>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -8,6 +9,7 @@
 #include "5cc.h"
 
 Token *token;
+LVar *locals;
 char *user_input;
 Node *code[100];
 
@@ -16,8 +18,11 @@ int main(int argc, char **argv) {
         error("引数の個数が正しくありません");
         return 1;
     }
+    locals = calloc(1, sizeof(LVar));
     
+    locals->offset = 0;
     user_input = argv[1];
+    
     token = tokenize(user_input);
     program();
 
@@ -27,7 +32,7 @@ int main(int argc, char **argv) {
 
     printf("\tpush rbp\n");
     printf("\tmov rbp, rsp\n");
-    printf("\tsub rsp, 208\n");
+    printf("\tsub rsp, %d\n", locals->offset);
 
     for (int i = 0; code[i]; i++) {
         gen(code[i]);

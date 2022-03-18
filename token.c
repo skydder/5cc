@@ -1,3 +1,4 @@
+//#include <cstddef.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -23,7 +24,7 @@ Token *consume_indent() {
 
 void expect(char *op) {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)){
-        error_at(token->str, "'%c'ではありません", op);
+        error_at(token->str, "'%s'ではありません", op);
     }
     token = token->next;
 }
@@ -40,6 +41,13 @@ bool at_eof() {
     return token->kind == TK_EOF;
 }
 
+int is_alnum(char c) {
+    return ('a' <= c && c <= 'z') ||
+            ('A' <= c && c <= 'Z') ||
+            ('0' <= c && c <= '9') ||
+            (c == '_');
+}
+
 Token *new_token(TokenKind kind, Token *cur, char *str) {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
@@ -48,6 +56,23 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
     return tok;
 }
 
+LVar *new_lvar(char *name, int len, LVar *next) {
+    LVar *lvar = calloc(1, sizeof(LVar));
+    lvar->next = next;
+    lvar->name = name;
+    lvar->len = len;
+    lvar->offset = lvar->next->offset + 8;
+    
+    return lvar;
+}
+
+LVar *find_lvar(Token *tok) {
+    for (LVar *var = locals; var->name; var = var->next)
+        if (var->len == tok->len && memcmp(tok->str, var->name, var->len) == 0)
+            return var;
+
+    return NULL;
+}
 Token *tokenize(char *p) {
     Token head;
     head.next = NULL;
@@ -72,9 +97,13 @@ Token *tokenize(char *p) {
 	        continue;
 	    }
 
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p++);
-            cur->len = 1;
+
+        if ('a' <= *p && *p <= 'z' || 'A' <= *p && *p <= 'Z' || *p == '_') {
+            int len = 1;
+            for (; is_alnum(p[len]) == 1; len++) len += 0;
+            cur = new_token(TK_IDENT, cur, p);
+            cur->len = len;
+            p += len;
             continue;
         }
 
