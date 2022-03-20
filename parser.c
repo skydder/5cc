@@ -29,7 +29,15 @@ void program() {
 }
 
 Node *stmt() {
-    Node *node = expr();
+    Node *node ;
+
+    if (consume_tk(TK_RETURN)) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    } else {
+        node = expr();
+    }
     expect(";");
     return node;
 }
@@ -40,7 +48,7 @@ Node *expr(){
 
 Node *assign() {
     Node *node = equal();
-    if (consume("=")) {
+    if (consume_op("=")) {
         node = new_node(ND_ASSIGN, node, assign());
     }
     return node;
@@ -50,9 +58,9 @@ Node *equal(){
     Node *node = relation();
 
     for (;;) {
-        if (consume("!=")) {
+        if (consume_op("!=")) {
             node = new_node(ND_NEQ, node, relation());
-        } else if (consume("==")) {
+        } else if (consume_op("==")) {
             node = new_node(ND_EQ, node, relation());
         } else {
             return node;
@@ -64,13 +72,13 @@ Node *relation(){
     Node *node = add();
 
     for (;;) {
-        if (consume("<=")) {
+        if (consume_op("<=")) {
             node = new_node(ND_LTE, node, add());
-        } else if (consume("<")) {
+        } else if (consume_op("<")) {
             node = new_node(ND_LT, node, add());
-        } else if (consume(">=")) {
+        } else if (consume_op(">=")) {
             node = new_node(ND_GTE, node, add());
-        } else if (consume(">")) {
+        } else if (consume_op(">")) {
             node = new_node(ND_GT, node, add());
         } else {
             return node;
@@ -82,9 +90,9 @@ Node *add() {
     Node *node = mul();
 
     for (;;) {
-        if (consume("+"))
+        if (consume_op("+"))
             node = new_node(ND_ADD, node, mul());
-        else  if (consume("-"))
+        else  if (consume_op("-"))
             node = new_node(ND_SUB, node, mul());
         else
             return node;
@@ -95,9 +103,9 @@ Node *mul() {
     Node *node = unary();
 
     for (;;) {
-        if (consume("*"))
+        if (consume_op("*"))
             node = new_node(ND_MUL, node, unary());
-        else if (consume("/"))
+        else if (consume_op("/"))
             node = new_node(ND_DIV, node, unary());
         else
             return node;
@@ -105,15 +113,15 @@ Node *mul() {
 }
 
 Node *unary() {
-    if (consume("+"))
+    if (consume_op("+"))
         return primary();
-    if (consume("-"))
+    if (consume_op("-"))
         return new_node(ND_SUB, new_node_num(0), primary());
     return primary();
 }
 
 Node *primary() {
-    if (consume("(")) {
+    if (consume_op("(")) {
         Node *node = expr();
         expect(")");
         return node;
@@ -168,6 +176,14 @@ void gen(Node *node) {
             printf("\tpop rax\n");
             printf("\tmov [rax], rdi\n");
             printf("\tpush rdi\n");
+            return;
+
+        case ND_RETURN:
+            gen(node->lhs);
+            printf("\tpop rax\n");
+            printf("\tmov rsp, rbp\n");
+            printf("\tpop rbp\n");
+            printf("\tret\n");
             return;
     }
 

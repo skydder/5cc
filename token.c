@@ -7,7 +7,7 @@
 
 #include "5cc.h"
 
-bool consume(char *op) {
+bool consume_op(char *op) {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)){
         return false;
     }
@@ -20,6 +20,13 @@ Token *consume_indent() {
         return NULL;
     }
     return token;
+}
+
+bool consume_tk(TokenKind tk) {
+    if (token->kind != tk) 
+        return false;
+    token = token->next;
+    return true;
 }
 
 void expect(char *op) {
@@ -97,6 +104,12 @@ Token *tokenize(char *p) {
 	        continue;
 	    }
 
+        if (strncmp(p, "return", 6) == 0 && is_alnum(p[6]) == 0) {
+            cur = new_token(TK_RETURN, cur, p);
+            cur->len = 6;
+            p += 6;
+            continue;
+        }
 
         if ('a' <= *p && *p <= 'z' || 'A' <= *p && *p <= 'Z' || *p == '_') {
             int len = 1;

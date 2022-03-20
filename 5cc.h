@@ -39,6 +39,7 @@ typedef enum {
     ND_GTE,
     ND_EQ,
     ND_NEQ,
+    ND_RETURN,
 } NodeKind;
 
 typedef struct LVar LVar;
@@ -66,8 +67,9 @@ void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 
 //-token
-bool consume(char *op);
+bool consume_op(char *op);
 Token *consume_indent();
+bool consume_tk(TokenKind tk);
 void expect(char *op);
 int expect_number();
 bool at_eof();
