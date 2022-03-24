@@ -98,7 +98,8 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' ||*p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=') {
+        if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' ||*p == ')' 
+            || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}') {
 	        cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
 	        continue;
@@ -108,6 +109,30 @@ Token *tokenize(char *p) {
             cur = new_token(TK_RETURN, cur, p);
             cur->len = 6;
             p += 6;
+            continue;
+        }
+        if (strncmp(p, "while", 5) == 0 && is_alnum(p[5]) == 0) {
+            cur = new_token(TK_WHILE, cur, p);
+            cur->len = 5;
+            p += 5;
+            continue;
+        }
+        if (strncmp(p, "for", 3) == 0 && is_alnum(p[3]) == 0) {
+            cur = new_token(TK_FOR, cur, p);
+            cur->len = 3;
+            p += 3;
+            continue;
+        }
+        if (strncmp(p, "if", 2) == 0 && is_alnum(p[2]) == 0) {
+            cur = new_token(TK_IF, cur, p);
+            cur->len = 2;
+            p += 2;
+            continue;
+        }
+        if (strncmp(p, "else", 4) == 0 && is_alnum(p[4]) == 0) {
+            cur = new_token(TK_ELSE, cur, p);
+            cur->len = 4;
+            p += 4;
             continue;
         }
 

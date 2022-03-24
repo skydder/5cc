@@ -13,6 +13,10 @@ typedef enum {
     TK_IDENT,
     TK_NUM,
     TK_RETURN,
+    TK_IF,
+    TK_WHILE,
+    TK_FOR,
+    TK_ELSE,
     TK_EOF,
 } TokenKind;
 
@@ -40,6 +44,12 @@ typedef enum {
     ND_EQ,
     ND_NEQ,
     ND_RETURN,
+    ND_WHILE,
+    ND_FOR,
+    ND_IF,
+    ND_EXPR_STMT,
+    ND_BLOCK,
+    ND_FUNCALL,
 } NodeKind;
 
 typedef struct LVar LVar;
@@ -54,10 +64,23 @@ struct LVar {
 typedef struct Node Node;
 struct Node {
     NodeKind kind;
+
+    Node *next;
+    Node *body;
     Node *lhs;
     Node *rhs;
+
+    Node *els;
+
+    Node *init;
+    Node *cond;
+    Node *inc;
+    Node *then;
+
     int val;
     int offset;
+
+    char *fn_name;
 };
 
 //prototpye declaration
@@ -86,6 +109,8 @@ Node *new_node_num(int val);
 extern Node *code[100];
 void program();
 Node *stmt();
+Node *block();
+Node *expr_stmt();
 Node *expr();
 Node *assign();
 Node *equal();
@@ -94,7 +119,9 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
-void gen_lval(Node *node);
-void gen(Node *node);
+
+//void gen_lval(Node *node);
+//void gen(Node *node);
+void codegen();
 
 #endif 

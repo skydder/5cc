@@ -1,7 +1,15 @@
+#include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "5cc.h"
+
+Node *new_n_kind(NodeKind kind) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    return node;
+}
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
     Node *node = calloc(1, sizeof(Node));
@@ -29,16 +37,80 @@ void program() {
 }
 
 Node *stmt() {
-    Node *node ;
+    Node *node;
 
     if (consume_tk(TK_RETURN)) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
         node->lhs = expr();
-    } else {
-        node = expr();
+        expect(";");
+        return node;
     }
+
+    if (consume_tk(TK_WHILE)) {
+        node = new_n_kind(ND_WHILE);
+        
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        return node;
+    }
+
+    if (consume_tk(TK_FOR)) {
+        node = new_n_kind(ND_FOR);
+    
+        expect("(");
+
+        if(consume_op(";") != true)
+            node->init = expr_stmt();
+
+        if (consume_op(";") != true) {
+            node->cond = expr();
+            expect(";");
+        }
+        if (consume_op(")") != true) {
+            node->inc = expr();
+            expect(")");
+        }
+        node->then = stmt();
+        return node;
+    }
+
+    if (consume_tk(TK_IF)) {
+        node = new_n_kind(ND_IF);
+        
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        if (!consume_tk(TK_ELSE)) 
+            node->els = stmt();
+        return node;
+    }
+    if (consume_op("{")) {
+        return block();
+    }
+    
+    return expr_stmt();
+    
+}
+
+Node *expr_stmt() {
+    Node *node;
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_EXPR_STMT;
+    node->lhs = expr();
     expect(";");
+    return node;
+}
+Node *block() {
+    Node tmp = {};
+    Node *cur = &tmp;
+    while (consume_op("}") != true) 
+        cur = cur->next = stmt();
+    Node *node = new_n_kind(ND_BLOCK);
+    node->body = tmp.next;
     return node;
 }
 
@@ -116,7 +188,7 @@ Node *unary() {
     if (consume_op("+"))
         return primary();
     if (consume_op("-"))
-        return new_node(ND_SUB, new_node_num(0), primary());
+        return new_node(ND_SUB, new_node_num(0), unary());
     return primary();
 }
 
@@ -130,114 +202,26 @@ Node *primary() {
     Token *tok = consume_indent();
     if (tok) {
         Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
+        if (consume_op("(") != true){
+            node->kind = ND_LVAR;
         
-        LVar *lvar = find_lvar(tok);
-        if (lvar) {
-            node->offset = lvar->offset;
+            LVar *lvar = find_lvar(tok);
+            if (lvar) {
+                node->offset = lvar->offset;
+            } else {
+                lvar = new_lvar(tok->str, tok->len, locals);
+                node->offset = lvar->offset;
+                locals = lvar;
+            }
+            token = token->next;
+            return node;
         } else {
-            lvar = new_lvar(tok->str, tok->len, locals);
-            node->offset = lvar->offset;
-            locals = lvar;
+            node->kind = ND_FUNCALL;
+            node->fn_name = strndup(tok->str, tok->len);
+            expect(")");
+            return node;
         }
-        token = token->next;
-        return node;
     }
     return new_node_num(expect_number());
 }
 
-void gen_lval(Node *node) {
-    if (node->kind != ND_LVAR) {
-        error("代入の左辺値が変数ではありません");
-    }
-
-    printf("\tmov rax, rbp\n");
-    printf("\tsub rax, %d\n", node->offset);
-    printf("\tpush rax\n");
-}
-
-void gen(Node *node) {
-    //if (node->kind == ND_NUM) {printf("\tpush %d\n", node->val);return;}
-    switch (node->kind) {
-        case ND_NUM:
-            printf("\tpush %d\n", node->val);
-            return;
-        case ND_LVAR:
-            gen_lval(node);
-            printf("\tpop rax\n");
-            printf("\tmov rax, [rax]\n");
-            printf("\tpush rax\n");
-            return;
-        case ND_ASSIGN:
-            gen_lval(node->lhs);
-            gen(node->rhs);
-
-            printf("\tpop rdi\n");
-            printf("\tpop rax\n");
-            printf("\tmov [rax], rdi\n");
-            printf("\tpush rdi\n");
-            return;
-
-        case ND_RETURN:
-            gen(node->lhs);
-            printf("\tpop rax\n");
-            printf("\tmov rsp, rbp\n");
-            printf("\tpop rbp\n");
-            printf("\tret\n");
-            return;
-    }
-
-    gen(node->lhs);
-    gen(node->rhs);
-
-    printf("\tpop rdi\n");
-    printf("\tpop rax\n");
-
-    switch (node->kind){
-        case ND_ADD:
-            printf("\tadd rax, rdi\n");
-            break;
-        case ND_SUB:
-            printf("\tsub rax, rdi\n");
-            break;
-        case ND_MUL:
-            printf("\timul rax, rdi\n");
-            break;
-        case ND_DIV:
-            printf("\tcqo\n");
-            printf("\tidiv rdi\n");
-            break;
-        case ND_LT://<
-            printf("\tcmp rax, rdi\n");
-            printf("\tsetl al\n");
-            printf("\tmovzb rax, al\n");
-            break;
-        case ND_LTE://<=
-            printf("\tcmp rax, rdi\n");
-            printf("\tsetle al\n");
-            printf("\tmovzb rax, al\n");
-            break;
-        case ND_GT://>
-            printf("\tcmp rdi, rax\n");
-            printf("\tsetl al\n");
-            printf("\tmovzb rax, al\n");
-            break;
-        case ND_GTE://>=
-            printf("\tcmp rdi, rax\n");
-            printf("\tsetle al\n");
-            printf("\tmovzb rax, al\n");
-            break;
-        case ND_EQ://==
-            printf("\tcmp rax, rdi\n");
-            printf("\tsete al\n");
-            printf("\tmovzb rax, al\n");
-            break;
-        case ND_NEQ://!=
-            printf("\tcmp rax, rdi\n");
-            printf("\tsetne al\n");
-            printf("\tmovzb rax, al\n");
-            break;
-    }
-
-    printf("\tpush rax\n");
-}

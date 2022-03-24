@@ -26,22 +26,8 @@ int main(int argc, char **argv) {
     token = tokenize(user_input);
     program();
 
-    printf(".intel_syntax noprefix\n");
-    printf(".globl main\n");
-    printf("main:\n");
-
-    printf("\tpush rbp\n");
-    printf("\tmov rbp, rsp\n");
-    printf("\tsub rsp, %d\n", locals->offset);
-
-    for (int i = 0; code[i]; i++) {
-        gen(code[i]);
-        printf("\tpop rax\n");
-    }
+    codegen();
     
-    printf("\tmov rsp, rbp\n");
-    printf("\tpop rbp\n");
-    printf("\tret\n");
     return 0;
 
 }
