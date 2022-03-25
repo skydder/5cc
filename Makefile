@@ -1,6 +1,7 @@
-CFLAGS=-std=c11 -g -static
+#CFLAGS=-std=c11 -g -static
 SRCS= 5cc.c error.c token.c parser.c codegen.c
 OBJS=$(SRCS:.c=.o)
+CC = gcc
 
 5cc: $(OBJS)
 	$(CC) -o 5cc $(OBJS) $(LDFLAGS)

@@ -1,5 +1,32 @@
 #include "5cc.h"
+#include <stddef.h>
 #include <stdio.h>
+
+static void arg(int i) {
+    switch (i) {
+        case 1:
+            printf("\tpop rax\n");
+            printf("\tmov rdi, rax\n");
+            return;
+        case 2:
+            printf("\tpop rax\n");
+            printf("\tmov rsi, rax\n");
+            return;
+        case 3:
+            printf("\tpop rax\n");
+            printf("\tmov rdx, rax\n");
+            return;
+        case 4:
+            printf("\tpop rax\n");
+            printf("\tmov rcx, rax\n");
+            return;
+        case 5:
+            printf("\tpop rax\n");
+            printf("\tmov r8, rax\n");
+            return;
+        
+    }
+}
 
 static int count(void) {
     static int i = 1;
@@ -38,7 +65,16 @@ void gen_expr(Node *node) {
             return;
         case ND_FUNCALL:
             printf("\tmov rax, 0\n");
+            if (node->arg) {
+                int j = 1;
+                for (Node *i = node->arg; i != NULL; i = i->next) {
+                    gen_expr(i);
+                    arg(j);
+                    j++;
+                }
+            }
             printf("\tcall %s\n", node->fn_name);
+            return;
     }
 
     gen_expr(node->lhs);

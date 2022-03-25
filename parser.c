@@ -202,7 +202,7 @@ Node *primary() {
     Token *tok = consume_indent();
     if (tok) {
         Node *node = calloc(1, sizeof(Node));
-        if (consume_op("(") != true){
+        if (strncmp(tok->next->str, "(", 1) != 0){
             node->kind = ND_LVAR;
         
             LVar *lvar = find_lvar(tok);
@@ -217,8 +217,17 @@ Node *primary() {
             return node;
         } else {
             node->kind = ND_FUNCALL;
-            node->fn_name = strndup(tok->str, tok->len);
-            expect(")");
+            node->fn_name = strndup(tok->str, tok->len); //strncpy(tok->str, tok->len);
+            token = token->next;
+            expect("(");
+            if (consume_op(")") != true) {
+                node->arg = expr();
+                for (Node *i = node->arg; !consume_op(")"); i = i->next){
+                    expect(",");
+                    i->next = expr();
+                }
+                //expect(")");
+            }
             return node;
         }
     }

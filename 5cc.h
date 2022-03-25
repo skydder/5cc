@@ -81,6 +81,7 @@ struct Node {
     int offset;
 
     char *fn_name;
+    Node *arg;
 };
 
 //prototpye declaration
