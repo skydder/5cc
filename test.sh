@@ -153,5 +153,5 @@ assert() {
 # assert 10 '{ i=0; while(i<10) { i=i+1; } return i; }'
 
 assert 3 "func(a,b) {return a + b;} main() {i = func(1,2); return i;}"
-
+assert 3 "main() {i = 3; y = &i; return *y;}"
 echo OK

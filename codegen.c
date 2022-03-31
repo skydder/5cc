@@ -44,6 +44,14 @@ void gen_expr(Node *node) {
             printf("\tmov [rax], rdi\n\n");
             
             return;
+        case ND_ADDR:
+            gen_lval(node->lhs);
+            return;
+        case ND_DEREF:
+            printf("\tpop rax\n");
+            printf("\tmov rax, [rax]\n");
+            printf("\tpush rax\n\n");
+            return;
         case ND_FUNCALL:
             if (node->arg) {
                 int j = 0;

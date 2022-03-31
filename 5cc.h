@@ -50,7 +50,8 @@ typedef enum {
     ND_EXPR_STMT,
     ND_BLOCK,
     ND_FUNCALL,
-    //ND_FUNC,
+    ND_ADDR,
+    ND_DEREF,
 } NodeKind;
 
 typedef struct LVar LVar;

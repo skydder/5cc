@@ -6,7 +6,7 @@
 
 #include "5cc.h"
 
-Node *new_n_kind(NodeKind kind) {
+Node *new_kind(NodeKind kind) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
     return node;
@@ -20,6 +20,11 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
     return node;
 }
 
+Node *new_unsry(NodeKind kind, Node *expr) {
+    Node *node = new_kind(kind);
+    node->lhs = expr;
+    return node;
+}
 Node *new_node_num(int val) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_NUM;
@@ -81,7 +86,7 @@ Node *stmt(Function *fn) {
     }
 
     if (consume_tk(TK_WHILE)) {
-        node = new_n_kind(ND_WHILE);
+        node = new_kind(ND_WHILE);
         
         expect("(");
         node->cond = expr(fn);
@@ -91,7 +96,7 @@ Node *stmt(Function *fn) {
     }
 
     if (consume_tk(TK_FOR)) {
-        node = new_n_kind(ND_FOR);
+        node = new_kind(ND_FOR);
     
         expect("(");
 
@@ -111,7 +116,7 @@ Node *stmt(Function *fn) {
     }
 
     if (consume_tk(TK_IF)) {
-        node = new_n_kind(ND_IF);
+        node = new_kind(ND_IF);
         
         expect("(");
         node->cond = expr(fn);
@@ -142,7 +147,7 @@ Node *block(Function *fn) {
     Node *cur = &tmp;
     while (consume_op("}") != true) 
         cur = cur->next = stmt(fn);
-    Node *node = new_n_kind(ND_BLOCK);
+    Node *node = new_kind(ND_BLOCK);
     node->body = tmp.next;
     return node;
 }
@@ -222,6 +227,10 @@ Node *unary(Function *fn) {
         return primary(fn);
     if (consume_op("-"))
         return new_node(ND_SUB, new_node_num(0), unary(fn));
+    if (consume_op("&"))
+        return new_unsry(ND_ADDR, primary(fn));
+    if (consume_op("*"))
+        return new_unsry(ND_DEREF, primary(fn));
     return primary(fn);
 }
 
