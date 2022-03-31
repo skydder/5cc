@@ -50,6 +50,7 @@ typedef enum {
     ND_EXPR_STMT,
     ND_BLOCK,
     ND_FUNCALL,
+    //ND_FUNC,
 } NodeKind;
 
 typedef struct LVar LVar;
@@ -84,6 +85,18 @@ struct Node {
     Node *arg;
 };
 
+typedef struct Function Function;
+
+struct Function {
+    char *name;
+    Node *body;
+    LVar *locals;
+    Function *next;
+    int arg;
+    //LVar *args; 
+
+};
+
 //prototpye declaration
 //-error
 extern char *user_input;
@@ -98,7 +111,7 @@ void expect(char *op);
 int expect_number();
 bool at_eof();
 LVar *new_lvar(char *name, int len, LVar *next);
-LVar *find_lvar(Token *tok);
+LVar *find_lvar(Token *tok, Function *fn);
 Token *new_token(TokenKind kind, Token *cur, char *str);
 Token *tokenize(char *p);
 extern Token *token;
@@ -107,19 +120,21 @@ extern LVar *locals;
 //-parser
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
-extern Node *code[100];
+extern Function *code[100];
 void program();
-Node *stmt();
-Node *block();
-Node *expr_stmt();
-Node *expr();
-Node *assign();
-Node *equal();
-Node *relation();
-Node *add();
-Node *mul();
-Node *unary();
-Node *primary();
+extern Function *fnc;
+Function *func();
+Node *stmt(Function *fn);
+Node *block(Function *fn);
+Node *expr_stmt(Function *fn);
+Node *expr(Function *fn);
+Node *assign(Function *fn);
+Node *equal(Function *fn);
+Node *relation(Function *fn);
+Node *add(Function *fn);
+Node *mul(Function *fn);
+Node *unary(Function *fn);
+Node *primary(Function *fn);
 
 //void gen_lval(Node *node);
 //void gen(Node *node);

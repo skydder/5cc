@@ -73,11 +73,13 @@ LVar *new_lvar(char *name, int len, LVar *next) {
     return lvar;
 }
 
-LVar *find_lvar(Token *tok) {
-    for (LVar *var = locals; var->name; var = var->next)
+LVar *find_lvar(Token *tok, Function *fn) {
+    for (LVar *var = fn->locals; var->name; var = var->next)
         if (var->len == tok->len && memcmp(tok->str, var->name, var->len) == 0)
             return var;
-
+    //for (LVar *var = fn->args; var->name; var = var->next)
+    //    if (var->len == tok->len && memcmp(tok->str, var->name, var->len) == 0)
+    //        return var;
     return NULL;
 }
 Token *tokenize(char *p) {

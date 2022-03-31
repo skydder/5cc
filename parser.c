@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -26,23 +27,55 @@ Node *new_node_num(int val) {
     return node;
 }
 
-Node *code[100];
+Function *code[100];
 
 void program() {
     int i = 0;
     while (!at_eof()) {
-        code[i++] = stmt();
+        code[i++] = func();
     }
     code[i] = NULL;
 }
 
-Node *stmt() {
+Function *func(){
+    Function *fn = calloc(1, sizeof(Function));
+    Token *fn_tok = consume_indent();
+    fn->name = strndup(fn_tok->str, fn_tok->len);
+    fn->locals = calloc(1, sizeof(LVar));
+    fn->locals->offset = 0;
+    token = token->next;
+    if (fn_tok) {
+        expect("(");
+        if (!consume_op(")")) {
+            Token *tok = consume_indent();
+            LVar *lvar = new_lvar(tok->str, tok->len, fn->locals);
+            fn->locals = lvar;
+            fn->arg = 1;
+            token = token->next;
+            for (int i = 0; !consume_op(")"); i++){
+                expect(",");
+                tok = consume_indent();
+                lvar = new_lvar(tok->str, tok->len, fn->locals);
+                fn->locals = lvar;
+                fn->arg += 1;
+                token = token->next;
+            }
+        }
+
+        expect("{");
+        fn->body = block(fn);
+        return fn;
+    } 
+    return NULL;
+}
+
+Node *stmt(Function *fn) {
     Node *node;
 
     if (consume_tk(TK_RETURN)) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
-        node->lhs = expr();
+        node->lhs = expr(fn);
         expect(";");
         return node;
     }
@@ -51,9 +84,9 @@ Node *stmt() {
         node = new_n_kind(ND_WHILE);
         
         expect("(");
-        node->cond = expr();
+        node->cond = expr(fn);
         expect(")");
-        node->then = stmt();
+        node->then = stmt(fn);
         return node;
     }
 
@@ -63,17 +96,17 @@ Node *stmt() {
         expect("(");
 
         if(consume_op(";") != true)
-            node->init = expr_stmt();
+            node->init = expr_stmt(fn);
 
         if (consume_op(";") != true) {
-            node->cond = expr();
+            node->cond = expr(fn);
             expect(";");
         }
         if (consume_op(")") != true) {
-            node->inc = expr();
+            node->inc = expr(fn);
             expect(")");
         }
-        node->then = stmt();
+        node->then = stmt(fn);
         return node;
     }
 
@@ -81,120 +114,120 @@ Node *stmt() {
         node = new_n_kind(ND_IF);
         
         expect("(");
-        node->cond = expr();
+        node->cond = expr(fn);
         expect(")");
-        node->then = stmt();
+        node->then = stmt(fn);
         if (!consume_tk(TK_ELSE)) 
-            node->els = stmt();
+            node->els = stmt(fn);
         return node;
     }
     if (consume_op("{")) {
-        return block();
+        return block(fn);
     }
     
-    return expr_stmt();
+    return expr_stmt(fn);
     
 }
 
-Node *expr_stmt() {
+Node *expr_stmt(Function *fn) {
     Node *node;
     node = calloc(1, sizeof(Node));
     node->kind = ND_EXPR_STMT;
-    node->lhs = expr();
+    node->lhs = expr(fn);
     expect(";");
     return node;
 }
-Node *block() {
+Node *block(Function *fn) {
     Node tmp = {};
     Node *cur = &tmp;
     while (consume_op("}") != true) 
-        cur = cur->next = stmt();
+        cur = cur->next = stmt(fn);
     Node *node = new_n_kind(ND_BLOCK);
     node->body = tmp.next;
     return node;
 }
 
-Node *expr(){
-    return assign();
+Node *expr(Function *fn){
+    return assign(fn);
 }
 
-Node *assign() {
-    Node *node = equal();
+Node *assign(Function *fn) {
+    Node *node = equal(fn);
     if (consume_op("=")) {
-        node = new_node(ND_ASSIGN, node, assign());
+        node = new_node(ND_ASSIGN, node, assign(fn));
     }
     return node;
 }
 
-Node *equal(){
-    Node *node = relation();
+Node *equal(Function *fn){
+    Node *node = relation(fn);
 
     for (;;) {
         if (consume_op("!=")) {
-            node = new_node(ND_NEQ, node, relation());
+            node = new_node(ND_NEQ, node, relation(fn));
         } else if (consume_op("==")) {
-            node = new_node(ND_EQ, node, relation());
+            node = new_node(ND_EQ, node, relation(fn));
         } else {
             return node;
         }
     }
 }
 
-Node *relation(){
-    Node *node = add();
+Node *relation(Function *fn){
+    Node *node = add(fn);
 
     for (;;) {
         if (consume_op("<=")) {
-            node = new_node(ND_LTE, node, add());
+            node = new_node(ND_LTE, node, add(fn));
         } else if (consume_op("<")) {
-            node = new_node(ND_LT, node, add());
+            node = new_node(ND_LT, node, add(fn));
         } else if (consume_op(">=")) {
-            node = new_node(ND_GTE, node, add());
+            node = new_node(ND_GTE, node, add(fn));
         } else if (consume_op(">")) {
-            node = new_node(ND_GT, node, add());
+            node = new_node(ND_GT, node, add(fn));
         } else {
             return node;
         }
     }
 }
 
-Node *add() {
-    Node *node = mul();
+Node *add(Function *fn) {
+    Node *node = mul(fn);
 
     for (;;) {
         if (consume_op("+"))
-            node = new_node(ND_ADD, node, mul());
+            node = new_node(ND_ADD, node, mul(fn));
         else  if (consume_op("-"))
-            node = new_node(ND_SUB, node, mul());
+            node = new_node(ND_SUB, node, mul(fn));
         else
             return node;
     }
 }
 
-Node *mul() {
-    Node *node = unary();
+Node *mul(Function *fn) {
+    Node *node = unary(fn);
 
     for (;;) {
         if (consume_op("*"))
-            node = new_node(ND_MUL, node, unary());
+            node = new_node(ND_MUL, node, unary(fn));
         else if (consume_op("/"))
-            node = new_node(ND_DIV, node, unary());
+            node = new_node(ND_DIV, node, unary(fn));
         else
             return node;
     }
 }
 
-Node *unary() {
+Node *unary(Function *fn) {
     if (consume_op("+"))
-        return primary();
+        return primary(fn);
     if (consume_op("-"))
-        return new_node(ND_SUB, new_node_num(0), unary());
-    return primary();
+        return new_node(ND_SUB, new_node_num(0), unary(fn));
+    return primary(fn);
 }
 
-Node *primary() {
+Node *primary(Function *fn) {
     if (consume_op("(")) {
-        Node *node = expr();
+        Node *node = expr(fn);
         expect(")");
         return node;
     }
@@ -205,28 +238,28 @@ Node *primary() {
         if (strncmp(tok->next->str, "(", 1) != 0){
             node->kind = ND_LVAR;
         
-            LVar *lvar = find_lvar(tok);
+            LVar *lvar = find_lvar(tok, fn);
             if (lvar) {
                 node->offset = lvar->offset;
             } else {
-                lvar = new_lvar(tok->str, tok->len, locals);
+                lvar = new_lvar(tok->str, tok->len, fn->locals);
                 node->offset = lvar->offset;
-                locals = lvar;
+                fn->locals = lvar;
             }
             token = token->next;
             return node;
         } else {
             node->kind = ND_FUNCALL;
-            node->fn_name = strndup(tok->str, tok->len); //strncpy(tok->str, tok->len);
+            node->fn_name = strndup(tok->str, tok->len); 
             token = token->next;
             expect("(");
             if (consume_op(")") != true) {
-                node->arg = expr();
+                node->arg = expr(fn);
                 for (Node *i = node->arg; !consume_op(")"); i = i->next){
                     expect(",");
-                    i->next = expr();
+                    i->next = expr(fn);
                 }
-                //expect(")");
+                
             }
             return node;
         }

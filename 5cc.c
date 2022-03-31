@@ -11,7 +11,7 @@
 Token *token;
 LVar *locals;
 char *user_input;
-Node *code[100];
+Function *code[100];
 
 int main(int argc, char **argv) {
     if (argc != 2) {
