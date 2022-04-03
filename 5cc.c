@@ -1,4 +1,3 @@
-//#include <cstddef>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -8,10 +7,6 @@
 
 #include "5cc.h"
 
-Token *token;
-
-char *user_input;
-Function *code[100];
 
 int main(int argc, char **argv) {
     if (argc != 2) {

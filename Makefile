@@ -1,5 +1,5 @@
 #CFLAGS=-std=c11 -g -static
-SRCS= 5cc.c error.c token.c parser.c codegen.c
+SRCS= 5cc.c util.c token.c parser.c codegen.c
 OBJS=$(SRCS:.c=.o)
 CC = gcc
 
