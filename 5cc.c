@@ -20,5 +20,4 @@ int main(int argc, char **argv) {
     program();
     codegen();
     return 0;
-
 }

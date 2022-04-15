@@ -24,6 +24,7 @@ typedef enum {
     TK_WHILE,
     TK_FOR,
     TK_ELSE,
+    TK_INT,
     TK_EOF,
 } TokenKind;
 
@@ -38,6 +39,15 @@ struct Token {
 
 extern Token *token;
 Token *tokenize(char *p);
+
+//===================================================================
+// type.c
+//===================================================================
+typedef struct Type Type;
+struct Type {
+    enum { INT, PTR } ty;
+    struct Type *ptr_to;
+};
 
 //===================================================================
 // parser.c
@@ -65,6 +75,7 @@ typedef enum {
     ND_FUNCALL,
     ND_ADDR,
     ND_DEREF,
+    ND_NULL_STMT,
 } NodeKind;
 
 typedef struct LVar LVar;
@@ -73,6 +84,7 @@ struct LVar {
     char *name;
     int len;
     int offset;
+    Type *type;
 };
 
 typedef struct Node Node;
@@ -96,6 +108,8 @@ struct Node {
 
     char *fn_name;
     Node *arg;
+
+    Type *type;
 };
 
 typedef struct Function Function;
@@ -104,8 +118,8 @@ struct Function {
     Node *body;
     LVar *locals;
     Function *next;
-    int arg;
-    //LVar *args;
+    LVar *args;
+    Type *type;
 
 };
 

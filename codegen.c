@@ -18,8 +18,10 @@ static void gen_lval(Node *node) {
         error("代入の左辺値が変数ではありません");
     }
 
-    printf("\tmov rax, rbp\n");
-    printf("\tsub rax, %d\n", node->offset);
+    //printf("\tmov rax, rbp\n");
+    //printf("\tsub rax, %d\n", node->offset);
+    //learax, [rbp-4]
+    printf("\tlea rax, [rbp - %d]\n", node->offset);
     printf("\tpush rax\n\n");
 }
 
@@ -197,6 +199,9 @@ static void gen_stmt(Node *node, char *name) {
             for (Node *i = node->body; i; i = i->next)
                 gen_stmt(i, name);
         }
+
+        case ND_NULL_STMT:
+            return ;
     }
 }
 static void gen_func(Function *fn){
@@ -206,10 +211,10 @@ static void gen_func(Function *fn){
     printf("\tmov rbp, rsp\n");
     
     printf("\tsub rsp, %d\n\n", align_to(fn->locals->offset, 16));
-    for (int i  = 0; i < fn->arg; i++) {
+    for (LVar *i = fn->args; i->name ; i = i->next) {
         printf("\tmov rax, rbp\n");
-        printf("\tsub rax, %d\n", 8 + 8 * i);
-        printf("\tmov [rax], %s\n", arg_reg[i]);
+        printf("\tsub rax, %d\n", i->offset);
+        printf("\tmov [rax], %s\n", arg_reg[i->offset/8-1]);
         printf("\tpush rax\n\n");
     }
     gen_stmt(fn->body, fn->name);

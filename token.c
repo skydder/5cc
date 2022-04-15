@@ -87,6 +87,13 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (is_reserved(p, "int")) {
+            cur = new_token(TK_INT, cur, p);
+            cur->len = 3;
+            p += 3;
+            continue;
+        }
+
         if ('a' <= *p && *p <= 'z' || 'A' <= *p && *p <= 'Z' || *p == '_') {
             int len = 1;
             for (; is_alnum(p[len]); len++) ;

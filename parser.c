@@ -6,6 +6,7 @@
 
 #include "5cc.h"
 
+Function *fn;
 //===================================================================
 // token
 //===================================================================
@@ -22,7 +23,9 @@ static Token *consume_indent() {
         //error_at(token->str, "'indent'ではありません");
         return NULL;
     }
-    return token;
+    Token *tok = token;
+    token = token->next;
+    return tok;
 }
 
 static bool consume_tk(TokenKind tk) {
@@ -33,7 +36,7 @@ static bool consume_tk(TokenKind tk) {
 }
 
 static void expect(char *op) {
-    if (strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if (token->kind == TK_IDENT || strlen(op) != token->len || memcmp(token->str, op, token->len))
         error_at(token->str, "'%s'ではありません", op);
     token = token->next;
 }
@@ -63,7 +66,10 @@ static LVar *new_lvar(char *name, int len, LVar *next) {
     return lvar;
 }
 
-static LVar *find_lvar(Token *tok, Function *fn) {
+static LVar *find_lvar(Token *tok) {
+    for (LVar *var = fn->args; var->name; var = var->next)
+        if (var->len == tok->len && memcmp(tok->str, var->name, var->len) == 0)
+            return var;
     for (LVar *var = fn->locals; var->name; var = var->next)
         if (var->len == tok->len && memcmp(tok->str, var->name, var->len) == 0)
             return var;
@@ -99,18 +105,39 @@ static Node *new_node_num(int val) {
 }
 
 //===================================================================
+// type.c
+//===================================================================
+Type *new_ptr2(Type *cur) {
+    Type *new = calloc(1, sizeof(Type));
+    new->ptr_to = cur;
+    new->ty = PTR;
+    return new;
+}
+Type *base_type() {
+    Type *cur = calloc(1, sizeof(Type));
+    expect("int");
+    cur->ty = INT;
+    while (consume_op("*")) {
+        cur = new_ptr2(cur);
+    }
+    return cur;
+}
+
+//===================================================================
 Function *func();
-static Node *stmt(Function *fn);
-static Node *block(Function *fn);
-static Node *expr_stmt(Function *fn);
-static Node *expr(Function *fn);
-static Node *assign(Function *fn);
-static Node *equal(Function *fn);
-static Node *relation(Function *fn);
-static Node *add(Function *fn);
-static Node *mul(Function *fn);
-static Node *unary(Function *fn);
-static Node *primary(Function *fn);
+LVar *read_param();
+static Node *stmt();
+static Node *block();
+static Node *expr_stmt();
+static Node *expr();
+static Node *assign();
+static Node *equal();
+static Node *relation();
+static Node *add();
+static Node *mul();
+static Node *unary();
+static Node *primary();
+static Node *null_stmt();
 //===================================================================
 
 Function *code[100];
@@ -124,82 +151,101 @@ void program() {
 }
 
 Function *func(){
-    Function *fn = calloc(1, sizeof(Function));
+    Function *fnc = calloc(1, sizeof(Function));
+    fnc->type = base_type();
     Token *fn_tok = consume_indent();
-    fn->name = strndup(fn_tok->str, fn_tok->len);
-    fn->locals = calloc(1, sizeof(LVar));
-    fn->locals->offset = 0;
-    token = token->next;
+    fnc->name = strndup(fn_tok->str, fn_tok->len);
+    fnc->locals = calloc(1, sizeof(LVar));
+    fnc->locals->offset = 0;
+
     if (fn_tok) {
         expect("(");
         if (!consume_op(")")) {
-            Token *tok = consume_indent();
-            LVar *lvar = new_lvar(tok->str, tok->len, fn->locals);
-            fn->locals = lvar;
-            fn->arg = 1;
-            token = token->next;
-            for (int i = 0; !consume_op(")"); i++){
-                expect(",");
-                tok = consume_indent();
-                lvar = new_lvar(tok->str, tok->len, fn->locals);
-                fn->locals = lvar;
-                fn->arg += 1;
-                token = token->next;
-            }
-        }
+            fnc->args = read_param(fn);
+            fnc->locals = fn->args;
+        } else
+            fnc->args = calloc(1, sizeof(LVar));
 
+        fn = fnc;
         expect("{");
-        fn->body = block(fn);
-        return fn;
+        fnc->body = block();
+        return fnc;
     } 
     return NULL;
 }
 
-static Node *stmt(Function *fn) {
+LVar *read_param(Function *fnc) {
+    Token *tok = consume_indent();
+    LVar *cur = new_lvar(tok->str, tok->len, fnc->locals);
+    cur->type = base_type();
+    fnc->locals = cur;
+    while (!consume_op(")")) {
+        expect(",");
+        tok = consume_indent();
+        cur = new_lvar(tok->str, tok->len, fnc->locals);
+        cur->type = base_type();
+        fnc->locals = cur;
+    }
+    return cur;
+}
+
+void declartion() {
+    Type *type = base_type();
+    Token *tok = consume_indent();
+    LVar *lvar = new_lvar(tok->str, tok->len, fn->locals);
+    lvar->type = type;
+    fn->locals = lvar;
+    return;
+}
+
+static Node *stmt() {
     Node *node;
     switch (token->kind) {
         case TK_RETURN:
             node = new_kind(ND_RETURN);
             expect("return");
-            node->lhs = expr(fn);
+            node->lhs = expr();
             expect(";");
             return node;
         case TK_WHILE:
             node = new_kind(ND_WHILE);
             expect("while");
             expect("(");
-            node->cond = expr(fn);
+            node->cond = expr();
             expect(")");
-            node->then = stmt(fn);
+            node->then = stmt();
             return node;
         case TK_FOR:
             node = new_kind(ND_FOR);
             expect("for");
             expect("(");
             if(!consume_op(";")) {
-                node->init = expr(fn);
+                node->init = expr();
                 expect(";");
             }
             if (!consume_op(";")) {
-                node->cond = expr(fn);
+                node->cond = expr();
                 expect(";");
             }
             if (!consume_op(")")) {
-                node->inc = expr(fn);
+                node->inc = expr();
                 expect(")");
             }
-            node->then = stmt(fn);
+            node->then = stmt();
             return node;
         case TK_IF:
             node = new_kind(ND_IF);
             expect("if");
             expect("(");
-            node->cond = expr(fn);
+            node->cond = expr();
             expect(")");
-            node->then = stmt(fn);
+            node->then = stmt();
             if (!consume_tk(TK_ELSE)) 
-                node->els = stmt(fn);
+                node->els = stmt();
             return node;
+        case TK_INT:
+            declartion();
+            return null_stmt();
     }
     
     if (consume_op("{")) {
@@ -212,23 +258,25 @@ static Node *stmt(Function *fn) {
 
 /*
 |* expr_stmt = expr ";"
-*/
-static Node *expr_stmt(Function *fn) {
-    Node *node;
-    node = new_kind(ND_EXPR_STMT);
-    node->lhs = expr(fn);
+|*/
+static Node *expr_stmt() {
+    Node *node = new_unary(ND_EXPR_STMT, expr(fn));
     expect(";");
     return node;
 }
-
+static Node *null_stmt() {
+    Node *node = new_kind(ND_NULL_STMT);
+    expect(";");
+    return node;
+}
 /*
 |* block = stmt* "}"
-*/
-static Node *block(Function *fn) {
+|*/
+static Node *block() {
     Node tmp = {};
     Node *cur = &tmp;
     while (!consume_op("}")) 
-        cur = cur->next = stmt(fn);
+        cur = cur->next = stmt();
     Node *node = new_kind(ND_BLOCK);
     node->body = tmp.next;
     return node;
@@ -236,15 +284,15 @@ static Node *block(Function *fn) {
 
 /*
 |* expr = assign
-*/
-static Node *expr(Function *fn){
+|*/
+static Node *expr(){
     return assign(fn);
 }
 
 /*
 |* assign = equal ("=" assign)?
-*/
-static Node *assign(Function *fn) {
+|*/
+static Node *assign() {
     Node *node = equal(fn);
     if (consume_op("=")) 
         node = new_node(ND_ASSIGN, node, assign(fn));
@@ -253,8 +301,8 @@ static Node *assign(Function *fn) {
 
 /*
 |* equal = relation ("!=" relation | "==" relation)*
-*/
-static Node *equal(Function *fn){
+|*/
+static Node *equal(){
     Node *node = relation(fn);
 
     for (;;) {
@@ -269,8 +317,8 @@ static Node *equal(Function *fn){
 
 /*
 |* relation = add ("<=" add | "<" add | ">=" add | ">" add)*
-*/
-static Node *relation(Function *fn){
+|*/
+static Node *relation(){
     Node *node = add(fn);
 
     for (;;) {
@@ -289,8 +337,8 @@ static Node *relation(Function *fn){
 
 /*
 |* add = mul ("+" mul | "-" mul)*
-*/
-static Node *add(Function *fn) {
+|*/
+static Node *add() {
     Node *node = mul(fn);
 
     for (;;) {
@@ -305,8 +353,8 @@ static Node *add(Function *fn) {
 
 /*  
 |* mul= unary ("*" unary | "/" unary)*
-*/
-static Node *mul(Function *fn) {
+|*/
+static Node *mul() {
     Node *node = unary(fn);
 
     for (;;) {
@@ -321,8 +369,8 @@ static Node *mul(Function *fn) {
 
 /*
 |* unary = ("+" | "-" | "*" | "&" )? unary                           
-*/
-static Node *unary(Function *fn) {
+|*/
+static Node *unary() {
     if (consume_op("+"))
         return primary(fn);
     if (consume_op("-"))
@@ -338,8 +386,8 @@ static Node *unary(Function *fn) {
 |* primary = "(" expr ")"                                   
 |*           | indent
 |*           | num
-*/
-static Node *primary(Function *fn) {
+|*/
+static Node *primary() {
     if (consume_op("(")) {
         Node *node = expr(fn);
         expect(")");
@@ -352,20 +400,16 @@ static Node *primary(Function *fn) {
         if (!is_same(tok->next->str, "(")){
             node->kind = ND_LVAR;
         
-            LVar *lvar = find_lvar(tok, fn);
+            LVar *lvar = find_lvar(tok);
             if (lvar) {
                 node->offset = lvar->offset;
             } else {
-                lvar = new_lvar(tok->str, tok->len, fn->locals);
-                node->offset = lvar->offset;
-                fn->locals = lvar;
+                error_at(token->str,"変数が定義されていません");
             }
-            token = token->next;
             return node;
         } else {
             node->kind = ND_FUNCALL;
             node->fn_name = strndup(tok->str, tok->len); 
-            token = token->next;
             expect("(");
             if (!consume_op(")")) {
                 node->arg = expr(fn);

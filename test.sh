@@ -124,34 +124,34 @@ assert() {
 # assert 1 '{ return 1>=1; }'
 # assert 0 '{ return 1>=2; }'
 
- assert 3 'main(){ a=3; return a; }'
- assert 8 'main(){ a=3; z=5; return a+z; }'
+ assert 3 'int main(){ int a; a=3; return a; }'
+ assert 8 'int main(){ a=3; z=5; return a+z; }'
 
-assert 3 'main(){ a=3; return a; }'
- assert 8 'main(){ a=3; z=5; return a+z; }'
- assert 6 'main(){ a=b=3; return a+b; }'
- assert 3 'main(){ return2=3; return return2; }'
- assert 8 'main(){ foo123=3; bar=5; return foo123+bar; }'
+assert 3 'int main(){ a=3; return a; }'
+ assert 8 'int main(){ a=3; z=5; return a+z; }'
+ assert 6 'int main(){ a=b=3; return a+b; }'
+ assert 3 'int main(){ return2=3; return return2; }'
+ assert 8 'int main(){ foo123=3; bar=5; return foo123+bar; }'
 
- assert 1 'main(){ return 1; 2; 3; }'
- assert 2 'main(){ 1; return 2; 3; }'
- assert 3 'main(){ 1; 2; return 3; }'
+ assert 1 'int main(){ return 1; 2; 3; }'
+ assert 2 'int main(){ 1; return 2; 3; }'
+ assert 3 'int main(){ 1; 2; return 3; }'
 
- assert 3 'main(){ {1; {2;} return 3;} }'
+ assert 3 'int main(){ {1; {2;} return 3;} }'
  #assert 5 '{ ;;; return 5; }'
 
- assert 3 'main(){ if (0) return 2; return 3; }'
- assert 3 'main(){ if (1-1) return 2; return 3; }'
- assert 2 'main(){ if (1) return 2; return 3; }'
- assert 2 'main(){ if (2-1) return 2; return 3; }'
-  assert 4 'main(){ if (0) { 1; 2; return 3; } else { return 4; } }'
- assert 3 'main(){ if (1) { 1; 2; return 3; } else { return 4; } }'
+ assert 3 'int main(){ if (0) return 2; return 3; }'
+ assert 3 'int main(){ if (1-1) return 2; return 3; }'
+ assert 2 'int main(){ if (1) return 2; return 3; }'
+ assert 2 'int main(){ if (2-1) return 2; return 3; }'
+  assert 4 'int main(){ if (0) { 1; 2; return 3; } else { return 4; } }'
+ assert 3 'int main(){ if (1) { 1; 2; return 3; } else { return 4; } }'
 
- assert 55 'main(){ i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j; }'
- assert 3 'main(){ for (;;) {return 3;} return 5; }'
+ assert 55 'int main(){ i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j; }'
+ assert 3 'int main(){ for (;;) {return 3;} return 5; }'
 
- assert 10 'main(){ i=0; while(i<10) { i=i+1; } return i; }'
+ assert 10 'int main(){ i=0; while(i<10) { i=i+1; } return i; }'
 
-assert 3 "func(a,b) {return a + b;} main() {i = func(1,2); return i;}"
-assert 3 "main() {i = 3; y = &i; return *y;}"
+assert 3 "int func(a,b) {return a + b;} int main() {i = func(1,2); return i;}"
+assert 3 "int main() {i = 3; y = &i; return *y;}"
 echo OK
