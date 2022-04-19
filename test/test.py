@@ -1,7 +1,7 @@
 import subprocess, sys
 
 def test_compiler(string, expect):
-    asm = subprocess.run(['./5cc', string], capture_output=True).stdout.decode('utf-8')
+    asm = subprocess.run(['./../src/5cc', string], capture_output=True).stdout.decode('utf-8')
     with open('tmp.s', 'w', encoding='utf-8') as file:
         file.write(asm)
     subprocess.run(['cc', '-o', 'tmp', 'tmp.s'])

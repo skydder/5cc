@@ -4,4 +4,6 @@ tmp*
 a.out
 5cc
 .vscode
-test.c
+src/test/
+test/tmp
+test/tmp.s
