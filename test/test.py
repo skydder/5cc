@@ -14,7 +14,9 @@ def test_compiler(string, expect):
         sys.stdout.write(out)
 
 def main():
+    print("===================================================================")
     test_compiler("int main() {return 0;}", 0)
+    print("===================================================================")
 
 if __name__ == '__main__':
     main()
