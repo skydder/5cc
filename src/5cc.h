@@ -75,7 +75,7 @@ typedef enum {
     ND_FUNCALL,
     ND_ADDR,
     ND_DEREF,
-    ND_NULL_STMT,
+    ND_NULL,
 } NodeKind;
 
 typedef struct LVar LVar;

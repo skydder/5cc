@@ -265,7 +265,7 @@ static Node *expr_stmt() {
     return node;
 }
 static Node *null_stmt() {
-    Node *node = new_kind(ND_NULL_STMT);
+    Node *node = new_kind(ND_NULL);
     expect(";");
     return node;
 }

@@ -3,10 +3,12 @@ SRCS= 5cc.c util.c token.c parser.c codegen.c
 OBJS=$(SRCS:.c=.o)
 CC = gcc
 
-5cc: $(OBJS)
-	$(CC) -o 5cc $(OBJS) $(LDFLAGS)
+5cc: $(OBJS) asm.o
+	$(CC) -o 5cc $(OBJS) asm.o $(LDFLAGS)
 
 $(OBJS): 5cc.h
+
+asm.o:asm.h
 
 test: 5cc
 	./test.sh
