@@ -10,7 +10,7 @@ extern inline void sub(char* dst, char* src);
 extern inline void imul(char* dst, char* src);
 extern inline void cmp(char* dst, char* src);
 
-extern inline void div(char* src);
+extern inline void idiv(char* src);
 
 extern inline void pop(char* dst);
 extern inline void push(char* dst);

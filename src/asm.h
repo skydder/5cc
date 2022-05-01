@@ -19,7 +19,7 @@ inline void add(char* dst, char* src) {
 
 // => rax /= dst
 // => rdx = rax % dst
-inline void div(char* src) {
+inline void idiv(char* src) {
     printf("\tcqo\n");
     printf("\tidiv %s\n", src);
 }

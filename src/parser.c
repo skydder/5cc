@@ -174,21 +174,22 @@ Function *func(){
     return NULL;
 }
 
-LVar *read_param(Function *fnc) {
-    Token *tok = consume_indent();
-    LVar *cur = new_lvar(tok->str, tok->len, fnc->locals);
-    cur->type = base_type();
-    fnc->locals = cur;
+LVar *read_params(Function *fnc) {
+    LVar *cur = read_param(fnc);
     while (!consume_op(")")) {
         expect(",");
-        tok = consume_indent();
-        cur = new_lvar(tok->str, tok->len, fnc->locals);
-        cur->type = base_type();
-        fnc->locals = cur;
+        cur = read_param(fnc);
     }
     return cur;
 }
-
+LVar *read_param(Function *fnc) {
+    Type *type = base_type();
+    Token *tok = consume_indent();
+    LVar *cur = new_lvar(tok->str, tok->len, fnc->locals);
+    cur->type = type;
+    fnc->locals = cur;
+    return cur;
+}
 void declartion() {
     Type *type = base_type();
     Token *tok = consume_indent();

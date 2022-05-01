@@ -104,7 +104,7 @@ static void gen_expr(Node *node) {
             imul("rax", "rdi");
             break;
         case ND_DIV:
-            div("rdi");
+            idiv("rdi");
             break;
         case ND_LT://<
             cmp("rax", "rdi");
