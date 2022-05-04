@@ -18,6 +18,7 @@ void vec_push(vector *vec, void *item) {
         vec->data = realloc(vec->data, sizeof(void*) * vec->capacity);
     }
     vec->data[vec->len++] = item;
+    return;
 }
 
 void *vec_pop(vector *vec) {
@@ -26,7 +27,9 @@ void *vec_pop(vector *vec) {
 }
 
 void *vec_last(vector *vec) {
-    assert(vec->len);
+    assert(vec->len  >= -1);
+    if (vec->len == -1)
+        return NULL;
     return vec->data[vec->len - 1];
 }
 

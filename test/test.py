@@ -17,6 +17,7 @@ def main():
     print("===================================================================")
     test_compiler("int main() {return 0;}", 0)
     test_compiler("int main(){int a; a = 0; return a;}", 0)
+    test_compiler("int fib(int n) {return n;} int main() {return fib(2);}", 2)
     print("===================================================================")
 
 if __name__ == '__main__':

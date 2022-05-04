@@ -1,5 +1,6 @@
 #include "5cc.h"
 #include "asm.h"
+#include "vector.h"
 #include <stddef.h>
 #include <stdio.h>
 
@@ -216,14 +217,15 @@ static void gen_func(Function *fn){
     push("rbp");
     mov("rbp", "rsp");
     
-    sub("rsp", f("%d", align_to(fn->locals->offset, 16)));
-    
-    for (LVar *i = fn->args; i->name ; i = i->next) {
+    sub("rsp", f("%d", align_to(((Var*)vec_last(fn->lvar))->offset, 16)));
+    endl();
+    for(Var *var = (Var*)vec_pop(fn->lvar); var->name != NULL; var = (Var*)vec_pop(fn->lvar)) {
         mov("rax", "rbp");
-        sub("rax", f("%d", i->offset));
-        mov("[rax]", f("%s", arg_reg[i->offset/8-1]));
+        sub("rax", f("%d", var->offset));
+        mov("[rax]", f("%s", arg_reg[var->offset/8-1]));
         push("rax");
     }
+    endl();
     gen_stmt(fn->body, fn->name);
     endl();
     label(f(".L.%s.return", fn->name));
@@ -235,8 +237,8 @@ static void gen_func(Function *fn){
 void codegen() {
     printf(".intel_syntax noprefix\n");
 
-    for (int i = 0; code[i]; i++) {
-        gen_func(code[i]);
+    for (int i = 0; i < funcs->len; i++) {
+        gen_func(funcs->data[i]);
     }
 
     return;

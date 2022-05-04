@@ -6,17 +6,8 @@
 
 #include "vector.h"
 
-
 //===================================================================
-// util.c
-//===================================================================
-extern char *user_input;
-void error_at(char *loc, char *fmt, ...);
-void error(char *fmt, ...);
-bool is_same(char *string, char *word);
-
-//===================================================================
-// token.c
+// type definitions
 //===================================================================
 typedef enum {
     TK_SYMBOL,
@@ -39,22 +30,14 @@ struct Token {
     char *str;
     int len;
 };
-
-extern Token *token;
-Token *tokenize(char *p);
-
-//===================================================================
-// type.c
-//===================================================================
 typedef struct Type Type;
 struct Type {
     enum { INT, PTR } ty;
     struct Type *ptr_to;
+    int size;
+    int array_size;
 };
 
-//===================================================================
-// parser.c
-//===================================================================
 typedef enum {
     ND_ADD,
     ND_SUB,
@@ -81,14 +64,13 @@ typedef enum {
     ND_NULL,
 } NodeKind;
 
-typedef struct LVar LVar;
-struct LVar {
-    LVar *next;
+
+typedef struct {
     char *name;
     int len;
-    int offset;
     Type *type;
-};
+    int offset;
+} Var;
 
 typedef struct Node Node;
 struct Node {
@@ -119,20 +101,64 @@ typedef struct Function Function;
 struct Function {
     char *name;
     Node *body;
-    LVar *locals;
+    
+    vector *lvar;
+    vector *param;
     Function *next;
-    LVar *args;
+    
     Type *type;
 
 };
+//===================================================================
+// util.c
+//===================================================================
+extern char *user_input;
+void error_at(char *loc, char *fmt, ...);
+void error(char *fmt, ...);
+bool is_same(char *string, char *word);
+//===================================================================
+// structs.c
+//===================================================================
+Node *new_kind(NodeKind kind);
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_unary(NodeKind kind, Node *expr);
+Node *new_node_num(int val);
 
-extern Function *code[100];
+Token *new_token(TokenKind kind, Token *cur, char *str);
+bool consume_op(char *op);
+Token *consume_indent();
+bool consume_tk(TokenKind tk);
+void expect(char *op);
+int expect_number();
+bool at_eof();
+
+Type *new_ptr2(Type *cur);
+Type *base_type();
+
+Var *new_var(char *name, int len, Type *type);
+void add_var2vec(Var *var, vector *vec);
+Var *find_var(vector *vec, Token *tok);
+//===================================================================
+// token.c
+//===================================================================
+extern Token *token;
+Token *tokenize(char *p);
+//===================================================================
+// parser.c
+//===================================================================
+//extern Function *code[100];
+extern vector *funcs;
 void program();
 extern Function *fnc;
-
 //===================================================================
 // codegen.c
 //===================================================================
 void codegen();
+
+//===================================================================
+// debag.c
+//===================================================================
+void p_tk(Token *tok);
+void p_var(Var *var);
 
 #endif
