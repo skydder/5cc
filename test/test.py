@@ -7,7 +7,7 @@ def test_compiler(string, expect):
     subprocess.run(['cc', '-o', 'tmp', 'tmp.s'])
     result = subprocess.run(['./tmp']).returncode
     if result != expect:
-        err = string + " => " + str(expect) + "expected, but got " + str(result)
+        err = string + " => " + str(expect) + " expected, but got " + str(result) + "\n"
         sys.stdout.write(err)
     else:
         out = string + " => " + str(result) + "\n"
@@ -18,6 +18,8 @@ def main():
     test_compiler("int main() {return 0;}", 0)
     test_compiler("int main(){int a; a = 0; return a;}", 0)
     test_compiler("int fib(int n) {return n;} int main() {return fib(2);}", 2)
+    test_compiler("int main() {int *a;int x; x = 10; a= &x;return *a;}", 10)
+    test_compiler("int main() {int *a;int x; x = 5; a= &x;*a = 10;return *a;}", 10)
     print("===================================================================")
 
 if __name__ == '__main__':

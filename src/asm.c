@@ -18,6 +18,7 @@ extern inline void call(char* dst);
 extern inline void jmp(char* dst);
 extern inline void ret();
 extern inline void label(char* label);
+extern inline void comment(char* str);
 
 char* f(char* str, ...){
     char buf[2048];

@@ -28,38 +28,52 @@ static void store() {
     push("rdi");
     endl();
 }
+static void gen_expr(Node *node);
 static void gen_addr(Node *node) {
-    if (node->kind != ND_LVAR) {
-        error("代入の左辺値が変数ではありません");
+    if (node->kind == ND_DEREF) {
+        node = node->lhs;
+        gen_addr(node);
+        load();
+        return;
     }
-
-    lea("rax", f("[rbp - %d]", node->offset)); // => lea rax, [rbp - (offset)]
-    push("rax");
-    endl();
+    if (node->kind == ND_LVAR) {
+        comment("-addr");
+        lea("rax", f("[rbp - %d]", node->offset)); // => lea rax, [rbp - (offset)]
+        push("rax");
+        endl();
+        return;
+    }
+    error("代入の左辺値が変数ではありません");
 }
 
 static void gen_expr(Node *node) {
     switch (node->kind) {
         case ND_NUM:
+            comment("num");
             push(f("%d", node->val));
             return;
         case ND_LVAR:
+            comment("lvar");
             gen_addr(node);
             load();
             return;
         case ND_ASSIGN:
+            comment("assign");
             gen_addr(node->lhs);
             gen_expr(node->rhs);
             store();
             return;
         case ND_ADDR:
+            comment("addr");
             gen_addr(node->lhs);
             return;
         case ND_DEREF:
+            comment("deref");
             gen_expr(node->lhs);
             load();
             return;
         case ND_FUNCALL:
+            comment("funcall");
             if (node->arg) {
                 int j = 0;
                 for (Node *i = node->arg; i != NULL; i = i->next) {
@@ -71,7 +85,6 @@ static void gen_expr(Node *node) {
             int c = count();
             mov("rax", "rsp");
             
-            //printf("\tand rax, 15\n");
             printf("\ttest rax, 15\n");
             printf("\tjnz .L.call.%d\n", c);
             mov("rax", "0");
@@ -216,16 +229,15 @@ static void gen_func(Function *fn){
     label(f("%s",fn->name));
     push("rbp");
     mov("rbp", "rsp");
-    
     sub("rsp", f("%d", align_to(((Var*)vec_last(fn->lvar))->offset, 16)));
     endl();
-    for(Var *var = (Var*)vec_pop(fn->lvar); var->name != NULL; var = (Var*)vec_pop(fn->lvar)) {
+    for(Var *var = (Var*)vec_pop(fn->param); var->name; var = (Var*)vec_pop(fn->lvar)) {
         mov("rax", "rbp");
         sub("rax", f("%d", var->offset));
         mov("[rax]", f("%s", arg_reg[var->offset/8-1]));
         push("rax");
+        endl();
     }
-    endl();
     gen_stmt(fn->body, fn->name);
     endl();
     label(f(".L.%s.return", fn->name));

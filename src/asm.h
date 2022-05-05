@@ -55,6 +55,9 @@ inline void ret() {
 inline void label(char* label) {
     printf("%s:\n",label);
 }
+inline void comment(char* str) {
+    printf("#%s\n",str);
+}
 
 char* f(char* str, ...);
 inline void endl() {
