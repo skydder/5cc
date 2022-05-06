@@ -31,9 +31,7 @@ static void store() {
 static void gen_expr(Node *node);
 static void gen_addr(Node *node) {
     if (node->kind == ND_DEREF) {
-        node = node->lhs;
-        gen_addr(node);
-        load();
+        gen_expr(node->lhs);
         return;
     }
     if (node->kind == ND_LVAR) {
