@@ -20,6 +20,31 @@ static bool is_reserved(char *string, char *reserved) {
 Token *token;
 
 
+struct kw {
+    TokenKind tk;
+    char* keyword;
+    int len;
+} KW[] = {{TK_ELSE, "else", 4},
+          {TK_FOR, "for", 3},
+          {TK_IF, "if", 2},
+          {TK_WHILE, "while", 5},
+          {TK_RETURN, "return", 6},
+          {TK_INT, "int", 3},
+          {0,NULL, 0}};
+
+
+Token *tk_reserved(char **p, Token* cur) {
+    Token* tok = NULL;
+    for (int i = 0; KW[i].keyword != NULL; i++) {
+        if (is_reserved(*p, KW[i].keyword)) {
+            tok = new_tk_str(KW[i].tk, cur, *p, KW[i].len);
+            *p += KW[i].len;
+            return tok;
+        }
+    }
+    return tok;
+}
+
 Token *tokenize(char *p) {
     Token head;
     head.next = NULL;
@@ -32,66 +57,27 @@ Token *tokenize(char *p) {
 	    }
 
         if (is_same(p, "<=") || is_same(p, ">=") || is_same(p, "!=") || is_same(p, "==")){
-            cur = new_token(TK_SYMBOL, cur, p);
-            cur->len = 2;
+            cur = new_tk_str(TK_SYMBOL, cur, p, 2);
             p += 2;
             continue;
         }
 
         if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' ||*p == ')' || *p == '&'
             || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}' || *p == ',') {
-	        cur = new_token(TK_SYMBOL, cur, p++);
-            cur->len = 1;
+            cur = new_tk_str(TK_SYMBOL, cur, p++, 1);
 	        continue;
 	    }
 
-        if (is_reserved(p, "return")) {
-            cur = new_token(TK_RETURN, cur, p);
-            cur->len = 6;
-            p += 6;
-            continue;
-        }
-        
-        if (is_reserved(p, "while")) {
-            cur = new_token(TK_WHILE, cur, p);
-            cur->len = 5;
-            p += 5;
-            continue;
-        }
-
-        if (is_reserved(p, "for")) {
-            cur = new_token(TK_FOR, cur, p);
-            cur->len = 3;
-            p += 3;
-            continue;
-        }
-
-        if (is_reserved(p, "if")) {
-            cur = new_token(TK_IF, cur, p);
-            cur->len = 2;
-            p += 2;
-            continue;
-        }
-
-        if (is_reserved(p, "else")) {
-            cur = new_token(TK_ELSE, cur, p);
-            cur->len = 4;
-            p += 4;
-            continue;
-        }
-
-        if (is_reserved(p, "int")) {
-            cur = new_token(TK_INT, cur, p);
-            cur->len = 3;
-            p += 3;
+        Token* reserved = tk_reserved(&p, cur);
+        if (reserved != NULL) {
+            cur = reserved;
             continue;
         }
 
         if ('a' <= *p && *p <= 'z' || 'A' <= *p && *p <= 'Z' || *p == '_') {
             int len = 1;
             for (; is_alnum(p[len]); len++) ;
-            cur = new_token(TK_IDENT, cur, p);
-            cur->len = len;
+            cur = new_tk_str(TK_IDENT, cur, p, len);
             p += len;
             continue;
         }

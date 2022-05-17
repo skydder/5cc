@@ -43,6 +43,11 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
     cur->next = tok;
     return tok;
 }
+Token *new_tk_str(TokenKind kind, Token *cur, char *str, int len) {
+    Token *tok = new_token(kind, cur, str);
+    tok->len = len;
+    return tok;
+}
 bool consume_op(char *op) {
     if (token->kind != TK_SYMBOL || strlen(op) != token->len || memcmp(token->str, op, token->len)){
         return false;

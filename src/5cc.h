@@ -125,6 +125,7 @@ Node *new_unary(NodeKind kind, Node *expr);
 Node *new_node_num(int val);
 
 Token *new_token(TokenKind kind, Token *cur, char *str);
+Token *new_tk_str(TokenKind kind, Token *cur, char *str, int len);
 bool consume_op(char *op);
 Token *consume_indent();
 bool consume_tk(TokenKind tk);
