@@ -20,7 +20,7 @@ static bool is_reserved(char *string, char *reserved) {
 Token *token;
 
 
-struct kw {
+static struct {
     TokenKind tk;
     char* keyword;
     int len;
@@ -32,13 +32,42 @@ struct kw {
           {TK_INT, "int", 3},
           {0,NULL, 0}};
 
-
-Token *tk_reserved(char **p, Token* cur) {
+static struct {
+    char* symbol;
+    int len;
+} Symbol[] = {{"<=", 2},
+              {">=", 2},
+              {"!=", 2},
+              {"==", 2},
+              {"+", 1},
+              {"=", 1},
+              {"-", 1},
+              {"/", 1},
+              {"*", 1},
+              {"{", 1},
+              {"}", 1},
+              {"&", 1},
+              {",", 1},
+              {"(", 1},
+              {")", 1},
+              {";", 1},
+              {"<", 1},
+              {">", 1},
+              {NULL, 0}
+              };
+static Token *tk_reserved(char **p, Token* cur) {
     Token* tok = NULL;
     for (int i = 0; KW[i].keyword != NULL; i++) {
         if (is_reserved(*p, KW[i].keyword)) {
             tok = new_tk_str(KW[i].tk, cur, *p, KW[i].len);
             *p += KW[i].len;
+            return tok;
+        }
+    }
+    for (int i = 0; Symbol[i].symbol != NULL; i++) {
+        if (is_same(*p, Symbol[i].symbol)) {
+            tok = new_tk_str(TK_SYMBOL, cur, *p, Symbol[i].len);
+            *p += Symbol[i].len;
             return tok;
         }
     }
@@ -53,18 +82,6 @@ Token *tokenize(char *p) {
     while (*p) {
         if (isspace(*p)) {
 	        p++;
-	        continue;
-	    }
-
-        if (is_same(p, "<=") || is_same(p, ">=") || is_same(p, "!=") || is_same(p, "==")){
-            cur = new_tk_str(TK_SYMBOL, cur, p, 2);
-            p += 2;
-            continue;
-        }
-
-        if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' ||*p == ')' || *p == '&'
-            || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}' || *p == ',') {
-            cur = new_tk_str(TK_SYMBOL, cur, p++, 1);
 	        continue;
 	    }
 
