@@ -221,15 +221,38 @@ static Node *relation(){
     }
 }
 
+static Node *new_add(Node *lhs, Node *rhs) {
+  add_type(lhs);
+  add_type(rhs);
+
+  // num + num
+  if (lhs->type->ty == INT && rhs->type->ty == INT)
+    return new_node(ND_ADD, lhs, rhs);
+
+  // Canonicalize `num + ptr` to `ptr + num`.
+  if (lhs->type->ty == INT && rhs->type->ty == PTR) {
+    Node *tmp = lhs;
+    lhs = rhs;
+    rhs = tmp;
+  }
+  if (lhs->type->ty == PTR && rhs->type->ty == PTR)
+    error("you can't add ptr to ptr\n");
+
+  // ptr + num
+  rhs = new_node(ND_MUL, rhs, new_node_num(8/*lhs->type->size*/));
+  return new_node(ND_ADD, lhs, rhs);
+}
+
 /*
 |* add = mul ("+" mul | "-" mul)*
 |*/
 static Node *add() {
-    Node *node = mul(fn);
+    Node *node = mul();
 
     for (;;) {
         if (consume_op("+"))
-            node = new_node(ND_ADD, node, mul());
+            // node = new_node(ND_ADD, node, mul());
+            node = new_add(node, mul());
         else  if (consume_op("-"))
             node = new_node(ND_SUB, node, mul());
         else
@@ -237,11 +260,13 @@ static Node *add() {
     }
 }
 
+
+
 /*  
 |* mul= unary ("*" unary | "/" unary)*
 |*/
 static Node *mul() {
-    Node *node = unary(fn);
+    Node *node = unary();
 
     for (;;) {
         if (consume_op("*"))
@@ -258,14 +283,14 @@ static Node *mul() {
 |*/
 static Node *unary() {
     if (consume_op("+"))
-        return primary(fn);
+        return primary();
     if (consume_op("-"))
         return new_node(ND_SUB, new_node_num(0), unary());
     if (consume_op("&"))
         return new_unary(ND_ADDR, unary());
     if (consume_op("*"))
         return new_unary(ND_DEREF, unary());
-    return primary(fn);
+    return primary();
 }
 
 /*
@@ -289,6 +314,7 @@ static Node *primary() {
             Var *var = find_var(fn->lvar, tok);
             if (var) {
                 node->offset = var->offset;
+                node->lvar = var;
             } else {
                 error_at(token->str,"変数が定義されていません");
             }

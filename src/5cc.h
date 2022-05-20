@@ -31,8 +31,9 @@ struct Token {
     int len;
 };
 typedef struct Type Type;
+typedef enum { INT, PTR } TypeKind;
 struct Type {
-    enum { INT, PTR } ty;
+    TypeKind ty;
     struct Type *ptr_to;
     int size;
     int array_size;
@@ -87,10 +88,10 @@ struct Node {
     Node *cond;
     Node *inc;
     Node *then;
-
+    
     int val;
     int offset;
-
+    Var *lvar;
     char *fn_name;
     Node *arg;
 
@@ -135,6 +136,7 @@ bool at_eof();
 
 Type *new_ptr2(Type *cur);
 Type *base_type();
+void add_type(Node *node);
 
 Var *new_var(char *name, int len, Type *type);
 void add_var2vec(Var *var, vector *vec);

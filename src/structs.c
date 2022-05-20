@@ -94,23 +94,72 @@ bool at_eof() {
 //===================================================================
 // type.c
 //===================================================================
-Type *new_ptr2(Type *cur) {
+
+Type ty_int = {INT, NULL, 8, 0};
+
+Type *new_type(TypeKind tk, int size) {
     Type *new = calloc(1, sizeof(Type));
+    new->ty = tk;
+    new->size = size;
+    return new;
+}
+Type *new_ptr2(Type *cur) {
+    // Type *new = calloc(1, sizeof(Type));
+    // new->ty = PTR;
+    Type *new = new_type(PTR, 8);
     new->ptr_to = cur;
-    new->ty = PTR;
     return new;
 }
 Type *base_type() {
-    Type *cur = calloc(1, sizeof(Type));
+    // Type *cur = calloc(1, sizeof(Type));
     expect("int");
-    cur->ty = INT;
-    cur->size = 8;
+    // cur->ty = INT;
+    Type *cur = &ty_int;
+    // cur->size = 8;
     while (consume_op("*")) {
         cur = new_ptr2(cur);
     }
     return cur;
 }
+void add_type(Node *node) {
+    if (!node || node->type)
+        return;
+    add_type(node->lhs);
+    add_type(node->rhs);
+    add_type(node->cond);
+    add_type(node->then);
+    add_type(node->els);
+    add_type(node->init);
+    add_type(node->inc);
 
+    for (Node *n = node->body; n; n = n->next)
+        add_type(n);
+    switch (node->kind) {
+        case ND_NUM:
+            node->type = &ty_int;
+            return;
+        case ND_LVAR:
+            node->type = node->lvar->type;
+            return;
+        case ND_ADD:
+            if (node->lhs->type == &ty_int && node->rhs->type != &ty_int) {
+                node->type = node->rhs->type;
+                return;
+            }
+            if (node->lhs->type != &ty_int && node->rhs->type == &ty_int) {
+                node->type = node->lhs->type;
+                return;
+            }
+            if (node->lhs->type == &ty_int && node->rhs->type == &ty_int) {
+                node->type = &ty_int;
+                return;
+            }
+            if (node->lhs->type != &ty_int && node->rhs->type != &ty_int)
+                error("you can't add ptr to ptr\n");
+        default:
+            return;
+    }
+}
 //===================================================================
 // var
 //===================================================================

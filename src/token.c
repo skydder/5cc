@@ -8,9 +8,9 @@
 
 static bool is_alnum(char c) {
     return ('a' <= c && c <= 'z') ||
-            ('A' <= c && c <= 'Z') ||
-            ('0' <= c && c <= '9') ||
-            (c == '_');
+           ('A' <= c && c <= 'Z') ||
+           ('0' <= c && c <= '9') ||
+           (c == '_');
 }
 
 static bool is_reserved(char *string, char *reserved) {
@@ -18,7 +18,6 @@ static bool is_reserved(char *string, char *reserved) {
 }
 
 Token *token;
-
 
 static struct {
     TokenKind tk;
@@ -53,8 +52,8 @@ static struct {
               {";", 1},
               {"<", 1},
               {">", 1},
-              {NULL, 0}
-              };
+              {NULL, 0}};
+
 static Token *tk_reserved(char **p, Token* cur) {
     Token* tok = NULL;
     for (int i = 0; KW[i].keyword != NULL; i++) {

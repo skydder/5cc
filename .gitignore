@@ -5,5 +5,5 @@ a.out
 5cc
 .vscode
 src/test/
-test/tmp
-test/tmp.s
+test/tmp*
+test/test*
