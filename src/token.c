@@ -23,13 +23,10 @@ static struct {
     TokenKind tk;
     char* keyword;
     int len;
-} KW[] = {{TK_ELSE, "else", 4},
-          {TK_FOR, "for", 3},
+} KW[] = {{TK_RETURN, "return", 6}, {TK_INT, "int", 3},
+          {TK_SIZEOF, "sizeof", 6}, {TK_FOR, "for", 3},
+          {TK_WHILE, "while", 5} ,{TK_ELSE, "else", 4},
           {TK_IF, "if", 2},
-          {TK_WHILE, "while", 5},
-          {TK_RETURN, "return", 6},
-          {TK_INT, "int", 3},
-          {TK_SIZEOF, "sizeof", 6},
           {0,NULL, 0}};
 
 static struct {
@@ -46,14 +43,14 @@ static Token *tk_reserved(char **p, Token* cur) {
     Token* tok = NULL;
     for (int i = 0; KW[i].keyword != NULL; i++) {
         if (is_reserved(*p, KW[i].keyword)) {
-            tok = new_tk_str(KW[i].tk, cur, *p, KW[i].len);
+            tok = NewTokenStr(KW[i].tk, cur, *p, KW[i].len);
             *p += KW[i].len;
             return tok;
         }
     }
     for (int i = 0; Symbol[i].symbol != NULL; i++) {
         if (is_same(*p, Symbol[i].symbol)) {
-            tok = new_tk_str(TK_SYMBOL, cur, *p, Symbol[i].len);
+            tok = NewTokenStr(TK_SYMBOL, cur, *p, Symbol[i].len);
             *p += Symbol[i].len;
             return tok;
         }
@@ -81,13 +78,13 @@ Token *tokenize(char *p) {
         if ('a' <= *p && *p <= 'z' || 'A' <= *p && *p <= 'Z' || *p == '_') {
             int len = 1;
             for (; is_alnum(p[len]); len++) ;
-            cur = new_tk_str(TK_IDENT, cur, p, len);
+            cur = NewTokenStr(TK_IDENT, cur, p, len);
             p += len;
             continue;
         }
 
 	    if (isdigit(*p)) {
-	        cur = new_token(TK_NUM, cur, p);
+	        cur = NewToken(TK_NUM, cur, p);
 	        cur->val = strtol(p, &p, 10);
 	        continue;
 	    }
@@ -95,6 +92,6 @@ Token *tokenize(char *p) {
     	error_at(cur->str, "トークナイズトークナイズできませんできません");
     }
 
-    new_token(TK_EOF, cur, p);
+    NewToken(TK_EOF, cur, p);
     return head.next;
 }

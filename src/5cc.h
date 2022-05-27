@@ -4,11 +4,16 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#include "vector.h"
-
 //===================================================================
 // type definitions
 //===================================================================
+
+typedef struct {
+    void **data;
+    int len;
+    int capacity;
+} vector;
+
 typedef enum {
     TK_SYMBOL,
     TK_IDENT,
@@ -19,6 +24,7 @@ typedef enum {
     TK_FOR,
     TK_ELSE,
     TK_INT,
+    TK_SIZEOF,
     TK_EOF,
 } TokenKind;
 
@@ -31,9 +37,9 @@ struct Token {
     int len;
 };
 typedef struct Type Type;
-typedef enum { INT, PTR } TypeKind;
+
 struct Type {
-    TypeKind ty;
+    enum { INT, PTR, ARRAY } ty;
     struct Type *ptr_to;
     int size;
     int array_size;
@@ -65,13 +71,13 @@ typedef enum {
     ND_NULL,
 } NodeKind;
 
-
 typedef struct {
     char *name;
     int len;
     Type *type;
     int offset;
 } Var;
+
 
 typedef struct Node Node;
 struct Node {
@@ -108,8 +114,8 @@ struct Function {
     Function *next;
     
     Type *type;
-
 };
+
 //===================================================================
 // util.c
 //===================================================================
@@ -117,30 +123,42 @@ extern char *user_input;
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 bool is_same(char *string, char *word);
+
+vector *NewVec();
+void PushVec(vector *vec, void *item);
+void *PopVec(vector *vec);
+void *GetVecLast(vector *vec);
+bool ContainsVec(vector *vec, void *item);
+void *GetVecAt(vector *vec, int index);
 //===================================================================
 // structs.c
 //===================================================================
-Node *new_kind(NodeKind kind);
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_unary(NodeKind kind, Node *expr);
-Node *new_node_num(int val);
+Node *NewNode(NodeKind kind);
+Node *NewNodeBinary(NodeKind kind, Node *lhs, Node *rhs);
+Node *NewNodeUnary(NodeKind kind, Node *expr);
+Node *NewNodeNum(int val);
 
-Token *new_token(TokenKind kind, Token *cur, char *str);
-Token *new_tk_str(TokenKind kind, Token *cur, char *str, int len);
-bool consume_op(char *op);
-Token *consume_indent();
-bool consume_tk(TokenKind tk);
-void expect(char *op);
-int expect_number();
-bool at_eof();
+Token *NewToken(TokenKind kind, Token *cur, char *str);
+Token *NewTokenStr(TokenKind kind, Token *cur, char *str, int len);
+bool ConsumeToken(char *str);
+Token *ConsumeTokenIndent();
+void ExpectToken(char *op);
+int ExpectTokenNum();
+bool IsTokenAtEof();
 
-Type *new_ptr2(Type *cur);
-Type *base_type();
-void add_type(Node *node);
+Var *NewVar(char *name, int len, Type *type);
+void AddVar2Vec(Var *var, vector *vec);
+Var *FindVar(vector *vec, Token *tok);
 
-Var *new_var(char *name, int len, Type *type);
-void add_var2vec(Var *var, vector *vec);
-Var *find_var(vector *vec, Token *tok);
+//===================================================================
+// type.c
+//===================================================================
+Type *NewTyPtr2(Type *cur);
+Type *BaseType();
+void AddType(Node *node);
+Type *NewTy(int tk, int size);
+Type *NewTyArray(Type *ty, int size);
+
 //===================================================================
 // token.c
 //===================================================================

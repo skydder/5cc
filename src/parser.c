@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #include "5cc.h"
-#include "vector.h"
 
 Function *fn;
 
@@ -30,44 +29,44 @@ vector *funcs;
 
 void program() {
     funcs = new_vec();
-    while (!at_eof()) {
+    while (!IsTokenAtEof()) {
         vec_push(funcs, func());
     }
 }
 
 void param(Function *func) {
-    Type *type = base_type();
-    Token *tok = consume_indent();
-    Var* var = new_var(tok->str, tok->len, type);
-    add_var2vec(var, func->param);
-    add_var2vec(var, func->lvar);
+    Type *type = BaseType();
+    Token *tok = ConsumeTokenIndent();
+    Var* var = NewVar(tok->str, tok->len, type);
+    AddVar2Vec(var, func->param);
+    AddVar2Vec(var, func->lvar);
 }
 void params(Function *func) {
     param(func);
-    while (!consume_op(")")) {
-        expect(",");
+    while (!ConsumeToken(")")) {
+        ExpectToken(",");
         param(func);
     }
 }
 
 Function *func(){
     Function *fnc = calloc(1, sizeof(Function));
-    fnc->type = base_type();
-    Token *fn_tok = consume_indent();
+    fnc->type = BaseType();
+    Token *fn_tok = ConsumeTokenIndent();
     fnc->name = strndup(fn_tok->str, fn_tok->len);
     fnc->lvar = new_vec();
     fnc->param = new_vec();
-    vec_push(fnc->lvar, new_var(NULL, 0, NULL));
-    vec_push(fnc->param, new_var(NULL, 0, NULL));
+    vec_push(fnc->lvar, NewVar(NULL, 0, NULL));
+    vec_push(fnc->param, NewVar(NULL, 0, NULL));
 
     if (fn_tok) {
         fn = fnc;
-        expect("(");
-        if (!consume_op(")")) {
+        ExpectToken("(");
+        if (!ConsumeToken(")")) {
             params(fnc);
         }
 
-        expect("{");
+        ExpectToken("{");
         fnc->body = block();
         return fnc;
     } 
@@ -76,11 +75,16 @@ Function *func(){
 
 
 void declartion() {
-    Type *type = base_type();
-    Token *tok = consume_indent();
-    Var *var = new_var(tok->str, tok->len, type);
+    Type *type = BaseType();
+    Token *tok = ConsumeTokenIndent();
+    if (ConsumeToken("[")) {
+        type  = NewTyArray(type, ExpectTokenNum());
+        ExpectToken("]");
+    }
+    Var *var = NewVar(tok->str, tok->len, type);
+    
     //p_var(var);
-    add_var2vec(var, fn->lvar);
+    AddVar2Vec(var, fn->lvar);
     return;
 }
 
@@ -88,45 +92,45 @@ static Node *stmt() {
     Node *node;
     switch (token->kind) {
         case TK_RETURN:
-            node = new_kind(ND_RETURN);
-            expect("return");
+            node = NewNode(ND_RETURN);
+            ExpectToken("return");
             node->lhs = expr();
-            expect(";");
+            ExpectToken(";");
             return node;
         case TK_WHILE:
-            node = new_kind(ND_WHILE);
-            expect("while");
-            expect("(");
+            node = NewNode(ND_WHILE);
+            ExpectToken("while");
+            ExpectToken("(");
             node->cond = expr();
-            expect(")");
+            ExpectToken(")");
             node->then = stmt();
             return node;
         case TK_FOR:
-            node = new_kind(ND_FOR);
-            expect("for");
-            expect("(");
-            if(!consume_op(";")) {
+            node = NewNode(ND_FOR);
+            ExpectToken("for");
+            ExpectToken("(");
+            if(!ConsumeToken(";")) {
                 node->init = expr();
-                expect(";");
+                ExpectToken(";");
             }
-            if (!consume_op(";")) {
+            if (!ConsumeToken(";")) {
                 node->cond = expr();
-                expect(";");
+                ExpectToken(";");
             }
-            if (!consume_op(")")) {
+            if (!ConsumeToken(")")) {
                 node->inc = expr();
-                expect(")");
+                ExpectToken(")");
             }
             node->then = stmt();
             return node;
         case TK_IF:
-            node = new_kind(ND_IF);
-            expect("if");
-            expect("(");
+            node = NewNode(ND_IF);
+            ExpectToken("if");
+            ExpectToken("(");
             node->cond = expr();
-            expect(")");
+            ExpectToken(")");
             node->then = stmt();
-            if (!consume_tk(TK_ELSE)) 
+            if (!ConsumeToken("else")) 
                 node->els = stmt();
             return node;
         case TK_INT:
@@ -134,7 +138,7 @@ static Node *stmt() {
             return null_stmt();
     }
     
-    if (consume_op("{")) {
+    if (ConsumeToken("{")) {
         return block();
     }
     
@@ -146,13 +150,13 @@ static Node *stmt() {
 |* expr_stmt = expr ";"
 |*/
 static Node *expr_stmt() {
-    Node *node = new_unary(ND_EXPR_STMT, expr());
-    expect(";");
+    Node *node = NewNodeUnary(ND_EXPR_STMT, expr());
+    ExpectToken(";");
     return node;
 }
 static Node *null_stmt() {
-    Node *node = new_kind(ND_NULL);
-    expect(";");
+    Node *node = NewNode(ND_NULL);
+    ExpectToken(";");
     return node;
 }
 /*
@@ -161,9 +165,9 @@ static Node *null_stmt() {
 static Node *block() {
     Node tmp = {};
     Node *cur = &tmp;
-    while (!consume_op("}")) 
+    while (!ConsumeToken("}")) 
         cur = cur->next = stmt();
-    Node *node = new_kind(ND_BLOCK);
+    Node *node = NewNode(ND_BLOCK);
     node->body = tmp.next;
     return node;
 }
@@ -180,8 +184,8 @@ static Node *expr(){
 |*/
 static Node *assign() {
     Node *node = equal(fn);
-    if (consume_op("=")) 
-        node = new_node(ND_ASSIGN, node, assign());
+    if (ConsumeToken("=")) 
+        node = NewNodeBinary(ND_ASSIGN, node, assign());
     return node;
 }
 
@@ -192,10 +196,10 @@ static Node *equal(){
     Node *node = relation(fn);
 
     for (;;) {
-        if (consume_op("!="))
-            node = new_node(ND_NEQ, node, relation());
-        else if (consume_op("=="))
-            node = new_node(ND_EQ, node, relation());
+        if (ConsumeToken("!="))
+            node = NewNodeBinary(ND_NEQ, node, relation());
+        else if (ConsumeToken("=="))
+            node = NewNodeBinary(ND_EQ, node, relation());
         else
             return node;
     }
@@ -208,39 +212,39 @@ static Node *relation(){
     Node *node = add(fn);
 
     for (;;) {
-        if (consume_op("<=")) 
-            node = new_node(ND_LTE, node, add());
-        else if (consume_op("<")) 
-            node = new_node(ND_LT, node, add());
-        else if (consume_op(">=")) 
-            node = new_node(ND_GTE, node, add());
-        else if (consume_op(">")) 
-            node = new_node(ND_GT, node, add());
+        if (ConsumeToken("<=")) 
+            node = NewNodeBinary(ND_LTE, node, add());
+        else if (ConsumeToken("<")) 
+            node = NewNodeBinary(ND_LT, node, add());
+        else if (ConsumeToken(">=")) 
+            node = NewNodeBinary(ND_GTE, node, add());
+        else if (ConsumeToken(">")) 
+            node = NewNodeBinary(ND_GT, node, add());
         else 
             return node;
     }
 }
 
 static Node *new_add(Node *lhs, Node *rhs) {
-  add_type(lhs);
-  add_type(rhs);
+    AddType(lhs);
+    AddType(rhs);
 
-  // num + num
-  if (lhs->type->ty == INT && rhs->type->ty == INT)
-    return new_node(ND_ADD, lhs, rhs);
+    // num + num
+    if (lhs->type->ty == INT && rhs->type->ty == INT)
+        return NewNodeBinary(ND_ADD, lhs, rhs);
 
-  // Canonicalize `num + ptr` to `ptr + num`.
-  if (lhs->type->ty == INT && rhs->type->ty == PTR) {
-    Node *tmp = lhs;
-    lhs = rhs;
-    rhs = tmp;
-  }
-  if (lhs->type->ty == PTR && rhs->type->ty == PTR)
-    error("you can't add ptr to ptr\n");
+    // Canonicalize `num + ptr` to `ptr + num`.
+    if (lhs->type->ty == INT && rhs->type->ty == PTR) {
+        Node *tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+    }
+    if (lhs->type->ty == PTR && rhs->type->ty == PTR)
+        error("you can't add ptr to ptr\n");
 
-  // ptr + num
-  rhs = new_node(ND_MUL, rhs, new_node_num(8/*lhs->type->size*/));
-  return new_node(ND_ADD, lhs, rhs);
+    // ptr + num
+    rhs = NewNodeBinary(ND_MUL, rhs, NewNodeNum(8/*lhs->type->size*/));
+    return NewNodeBinary(ND_ADD, lhs, rhs);
 }
 
 /*
@@ -250,17 +254,15 @@ static Node *add() {
     Node *node = mul();
 
     for (;;) {
-        if (consume_op("+"))
+        if (ConsumeToken("+"))
             // node = new_node(ND_ADD, node, mul());
             node = new_add(node, mul());
-        else  if (consume_op("-"))
-            node = new_node(ND_SUB, node, mul());
+        else  if (ConsumeToken("-"))
+            node = NewNodeBinary(ND_SUB, node, mul());
         else
             return node;
     }
 }
-
-
 
 /*  
 |* mul= unary ("*" unary | "/" unary)*
@@ -269,10 +271,10 @@ static Node *mul() {
     Node *node = unary();
 
     for (;;) {
-        if (consume_op("*"))
-            node = new_node(ND_MUL, node, unary());
-        else if (consume_op("/"))
-            node = new_node(ND_DIV, node, unary());
+        if (ConsumeToken("*"))
+            node = NewNodeBinary(ND_MUL, node, unary());
+        else if (ConsumeToken("/"))
+            node = NewNodeBinary(ND_DIV, node, unary());
         else
             return node;
     }
@@ -282,14 +284,16 @@ static Node *mul() {
 |* unary = ("+" | "-" | "*" | "&" )? unary                           
 |*/
 static Node *unary() {
-    if (consume_op("+"))
+    if (ConsumeToken("+"))
         return primary();
-    if (consume_op("-"))
-        return new_node(ND_SUB, new_node_num(0), unary());
-    if (consume_op("&"))
-        return new_unary(ND_ADDR, unary());
-    if (consume_op("*"))
-        return new_unary(ND_DEREF, unary());
+    if (ConsumeToken("-"))
+        return NewNodeBinary(ND_SUB, NewNodeNum(0), unary());
+    if (ConsumeToken("&"))
+        return NewNodeUnary(ND_ADDR, unary());
+    if (ConsumeToken("*"))
+        return NewNodeUnary(ND_DEREF, unary());
+    if (ConsumeToken("sizeof"))
+        return NewNodeNum(8);  // <= return type size
     return primary();
 }
 
@@ -299,19 +303,19 @@ static Node *unary() {
 |*           | num
 |*/
 static Node *primary() {
-    if (consume_op("(")) {
+    if (ConsumeToken("(")) {
         Node *node = expr();
-        expect(")");
+        ExpectToken(")");
         return node;
     }
 
-    Token *tok = consume_indent();
+    Token *tok = ConsumeTokenIndent();
     if (tok) {
         Node *node = calloc(1, sizeof(Node));
         if (!is_same(tok->next->str, "(")){
             node->kind = ND_LVAR;
         
-            Var *var = find_var(fn->lvar, tok);
+            Var *var = FindVar(fn->lvar, tok);
             if (var) {
                 node->offset = var->offset;
                 node->lvar = var;
@@ -322,11 +326,11 @@ static Node *primary() {
         } else {
             node->kind = ND_FUNCALL;
             node->fn_name = strndup(tok->str, tok->len); 
-            expect("(");
-            if (!consume_op(")")) {
+            ExpectToken("(");
+            if (!ConsumeToken(")")) {
                 node->arg = expr();
-                for (Node *i = node->arg; !consume_op(")"); i = i->next){
-                    expect(",");
+                for (Node *i = node->arg; !ConsumeToken(")"); i = i->next){
+                    ExpectToken(",");
                     i->next = expr();
                 }
                 
@@ -334,6 +338,6 @@ static Node *primary() {
             return node;
         }
     }
-    return new_node_num(expect_number());
+    return NewNodeNum(ExpectTokenNum());
 }
 

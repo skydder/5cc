@@ -1,8 +1,8 @@
-#include "5cc.h"
-#include "asm.h"
-#include "vector.h"
 #include <stddef.h>
 #include <stdio.h>
+
+#include "5cc.h"
+#include "asm.h"
 
 static char *arg_reg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
@@ -227,9 +227,9 @@ static void gen_func(Function *fn){
     label(f("%s",fn->name));
     push("rbp");
     mov("rbp", "rsp");
-    sub("rsp", f("%d", align_to(((Var*)vec_last(fn->lvar))->offset, 16)));
+    sub("rsp", f("%d", align_to(((Var*)GetVecLast(fn->lvar))->offset, 16)));
     endl();
-    for(Var *var = (Var*)vec_pop(fn->param); var->name; var = (Var*)vec_pop(fn->lvar)) {
+    for(Var *var = (Var*)PopVec(fn->param); var->name; var = (Var*)PopVec(fn->lvar)) {
         mov("rax", "rbp");
         sub("rax", f("%d", var->offset));
         mov("[rax]", f("%s", arg_reg[var->offset/8-1]));
