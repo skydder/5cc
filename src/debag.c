@@ -4,6 +4,6 @@
 void p_tk(Token *tok) {
     printf("%d, %s\n", tok->len, tok->str);
 }
-void p_var(Var *var) {
-    printf("%d, %s\n", var->len, var->name);
+void p_var(Obj *var) {
+    printf("%d, %s\n", var->name_len, var->name);
 }

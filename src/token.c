@@ -43,14 +43,14 @@ static Token *tk_reserved(char **p, Token* cur) {
     Token* tok = NULL;
     for (int i = 0; KW[i].keyword != NULL; i++) {
         if (is_reserved(*p, KW[i].keyword)) {
-            tok = NewTokenStr(KW[i].tk, cur, *p, KW[i].len);
+            tok = NewToken(KW[i].tk, cur, *p, KW[i].len);
             *p += KW[i].len;
             return tok;
         }
     }
     for (int i = 0; Symbol[i].symbol != NULL; i++) {
         if (is_same(*p, Symbol[i].symbol)) {
-            tok = NewTokenStr(TK_SYMBOL, cur, *p, Symbol[i].len);
+            tok = NewToken(TK_SYMBOL, cur, *p, Symbol[i].len);
             *p += Symbol[i].len;
             return tok;
         }
@@ -78,13 +78,13 @@ Token *tokenize(char *p) {
         if ('a' <= *p && *p <= 'z' || 'A' <= *p && *p <= 'Z' || *p == '_') {
             int len = 1;
             for (; is_alnum(p[len]); len++) ;
-            cur = NewTokenStr(TK_IDENT, cur, p, len);
+            cur = NewToken(TK_IDENT, cur, p, len);
             p += len;
             continue;
         }
 
 	    if (isdigit(*p)) {
-	        cur = NewToken(TK_NUM, cur, p);
+	        cur = NewToken(TK_NUM, cur, p, 0);
 	        cur->val = strtol(p, &p, 10);
 	        continue;
 	    }
@@ -92,6 +92,6 @@ Token *tokenize(char *p) {
     	error_at(cur->str, "トークナイズトークナイズできませんできません");
     }
 
-    NewToken(TK_EOF, cur, p);
+    NewToken(TK_EOF, cur, p, 0);
     return head.next;
 }

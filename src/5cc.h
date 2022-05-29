@@ -71,14 +71,8 @@ typedef enum {
     ND_NULL,
 } NodeKind;
 
-typedef struct {
-    char *name;
-    int len;
-    Type *type;
-    int offset;
-} Var;
 
-
+typedef struct obj Obj;
 typedef struct Node Node;
 struct Node {
     NodeKind kind;
@@ -97,23 +91,27 @@ struct Node {
     
     int val;
     int offset;
-    Var *lvar;
+    Obj *lvar;
+
     char *fn_name;
     Node *arg;
 
     Type *type;
 };
 
-typedef struct Function Function;
-struct Function {
+struct obj {
     char *name;
-    Node *body;
-    
-    vector *lvar;
-    vector *param;
-    Function *next;
-    
+    int name_len;
     Type *type;
+    Token *tok;
+
+    bool is_local;
+    int offset;
+
+    bool is_func;
+    vector *lvar;  // <obj>
+    vector *param;  // <obj>
+    Node *body;
 };
 
 //===================================================================
@@ -138,26 +136,26 @@ Node *NewNodeBinary(NodeKind kind, Node *lhs, Node *rhs);
 Node *NewNodeUnary(NodeKind kind, Node *expr);
 Node *NewNodeNum(int val);
 
-Token *NewToken(TokenKind kind, Token *cur, char *str);
-Token *NewTokenStr(TokenKind kind, Token *cur, char *str, int len);
+Token *NewToken(TokenKind kind, Token *cur, char *str, int len);
 bool ConsumeToken(char *str);
 Token *ConsumeTokenIndent();
 void ExpectToken(char *op);
 int ExpectTokenNum();
 bool IsTokenAtEof();
 
-Var *NewVar(char *name, int len, Type *type);
-void AddVar2Vec(Var *var, vector *vec);
-Var *FindVar(vector *vec, Token *tok);
-
+Obj *NewObj(Type *type);
+Obj *NewLVar(Token *tok, Type *type);
+void AddVar2Vec(Obj *var, vector *vec);
+Obj *FindVar(vector *vec, Token *tok);
+Obj *NewFunc(Token *tok, Type *type);
 //===================================================================
 // type.c
 //===================================================================
-Type *NewTyPtr2(Type *cur);
+Type *NewTypePtr2(Type *cur);
 Type *BaseType();
 void AddType(Node *node);
-Type *NewTy(int tk, int size);
-Type *NewTyArray(Type *ty, int size);
+Type *NewType(int tk, int size);
+Type *NewTypeArray(Type *ty, int size);
 
 //===================================================================
 // token.c
@@ -170,7 +168,7 @@ Token *tokenize(char *p);
 //extern Function *code[100];
 extern vector *funcs;
 void program();
-extern Function *fnc;
+extern Obj *fnc;
 //===================================================================
 // codegen.c
 //===================================================================
@@ -180,6 +178,6 @@ void codegen();
 // debag.c
 //===================================================================
 void p_tk(Token *tok);
-void p_var(Var *var);
+
 
 #endif

@@ -6,10 +6,10 @@
 
 #include "5cc.h"
 
-Function *fn;
+ Obj *cur_fn;
 
 //===================================================================
-Function *func();
+Obj *func();
 static Node *stmt();
 static Node *block();
 static Node *expr_stmt();
@@ -24,24 +24,21 @@ static Node *primary();
 static Node *null_stmt();
 //===================================================================
 
-//Function *code[100];
-vector *funcs;
+vector *funcs;  // <obj*>
 
 void program() {
-    funcs = new_vec();
+    funcs = NewVec();
     while (!IsTokenAtEof()) {
-        vec_push(funcs, func());
+        PushVec(funcs, func());
     }
 }
 
-void param(Function *func) {
-    Type *type = BaseType();
-    Token *tok = ConsumeTokenIndent();
-    Var* var = NewVar(tok->str, tok->len, type);
+void param(Obj *func) {
+    Obj* var = NewLVar(ConsumeTokenIndent(), BaseType());
     AddVar2Vec(var, func->param);
     AddVar2Vec(var, func->lvar);
 }
-void params(Function *func) {
+void params(Obj *func) {
     param(func);
     while (!ConsumeToken(")")) {
         ExpectToken(",");
@@ -49,28 +46,21 @@ void params(Function *func) {
     }
 }
 
-Function *func(){
-    Function *fnc = calloc(1, sizeof(Function));
-    fnc->type = BaseType();
-    Token *fn_tok = ConsumeTokenIndent();
-    fnc->name = strndup(fn_tok->str, fn_tok->len);
-    fnc->lvar = new_vec();
-    fnc->param = new_vec();
-    vec_push(fnc->lvar, NewVar(NULL, 0, NULL));
-    vec_push(fnc->param, NewVar(NULL, 0, NULL));
-
-    if (fn_tok) {
-        fn = fnc;
+Obj *func(){
+    Obj *fnc = NewFunc(ConsumeTokenIndent(), BaseType());
+    if (fnc->tok) {
+        cur_fn = fnc;
         ExpectToken("(");
         if (!ConsumeToken(")")) {
             params(fnc);
         }
 
         ExpectToken("{");
-        fnc->body = block();
-        return fnc;
-    } 
-    return NULL;
+        fnc->body = block(); 
+    } else {
+        fnc = NULL;
+    }
+    return fnc;
 }
 
 
@@ -78,13 +68,13 @@ void declartion() {
     Type *type = BaseType();
     Token *tok = ConsumeTokenIndent();
     if (ConsumeToken("[")) {
-        type  = NewTyArray(type, ExpectTokenNum());
+        type  = NewTypeArray(type, ExpectTokenNum());
         ExpectToken("]");
     }
-    Var *var = NewVar(tok->str, tok->len, type);
+    Obj *var = NewLVar(tok, type);
     
     //p_var(var);
-    AddVar2Vec(var, fn->lvar);
+    AddVar2Vec(var, cur_fn->lvar);
     return;
 }
 
@@ -176,14 +166,14 @@ static Node *block() {
 |* expr = assign
 |*/
 static Node *expr(){
-    return assign(fn);
+    return assign();
 }
 
 /*
 |* assign = equal ("=" assign)?
 |*/
 static Node *assign() {
-    Node *node = equal(fn);
+    Node *node = equal();
     if (ConsumeToken("=")) 
         node = NewNodeBinary(ND_ASSIGN, node, assign());
     return node;
@@ -193,7 +183,7 @@ static Node *assign() {
 |* equal = relation ("!=" relation | "==" relation)*
 |*/
 static Node *equal(){
-    Node *node = relation(fn);
+    Node *node = relation();
 
     for (;;) {
         if (ConsumeToken("!="))
@@ -209,7 +199,7 @@ static Node *equal(){
 |* relation = add ("<=" add | "<" add | ">=" add | ">" add)*
 |*/
 static Node *relation(){
-    Node *node = add(fn);
+    Node *node = add();
 
     for (;;) {
         if (ConsumeToken("<=")) 
@@ -315,7 +305,7 @@ static Node *primary() {
         if (!is_same(tok->next->str, "(")){
             node->kind = ND_LVAR;
         
-            Var *var = FindVar(fn->lvar, tok);
+            Obj *var = FindVar(cur_fn->lvar, tok);
             if (var) {
                 node->offset = var->offset;
                 node->lvar = var;

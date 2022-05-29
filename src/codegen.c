@@ -222,14 +222,14 @@ static void gen_stmt(Node *node, char *name) {
             return;
     }
 }
-static void gen_func(Function *fn){
+static void gen_func(Obj *fn){
     printf(".globl %s\n", fn->name);
     label(f("%s",fn->name));
     push("rbp");
     mov("rbp", "rsp");
-    sub("rsp", f("%d", align_to(((Var*)GetVecLast(fn->lvar))->offset, 16)));
+    sub("rsp", f("%d", align_to(((Obj*)GetVecLast(fn->lvar))->offset, 16)));
     endl();
-    for(Var *var = (Var*)PopVec(fn->param); var->name; var = (Var*)PopVec(fn->lvar)) {
+    for(Obj *var = (Obj*)PopVec(fn->param); var->name; var = (Obj*)PopVec(fn->lvar)) {
         mov("rax", "rbp");
         sub("rax", f("%d", var->offset));
         mov("[rax]", f("%s", arg_reg[var->offset/8-1]));

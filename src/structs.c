@@ -1,4 +1,6 @@
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "5cc.h"
@@ -36,18 +38,15 @@ Node *NewNodeNum(int val) {
 //===================================================================
 // token
 //===================================================================
-Token *NewToken(TokenKind kind, Token *cur, char *str) {
+Token *NewToken(TokenKind kind, Token *cur, char *str, int len) {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->str = str;
     cur->next = tok;
-    return tok;
-}
-Token *NewTokenStr(TokenKind kind, Token *cur, char *str, int len) {
-    Token *tok = NewToken(kind, cur, str);
     tok->len = len;
     return tok;
 }
+
 bool ConsumeToken(char *str) {
     if (token->kind != TK_SYMBOL || strlen(str) != token->len || memcmp(token->str, str, token->len)){
         return false;
@@ -58,7 +57,6 @@ bool ConsumeToken(char *str) {
 
 Token *ConsumeTokenIndent() {
     if (token->kind != TK_IDENT) {
-        //error_at(token->str, "'indent'ではありません");
         return NULL;
     }
     Token *tok = token;
@@ -85,30 +83,50 @@ bool IsTokenAtEof() {
 }
 
 //===================================================================
-// var
+// Obj
 //===================================================================
-Var *NewVar(char *name, int len, Type *type) {
-    Var *new = calloc(1, sizeof(Var));
-    new->name = name;
-    new->len = len;
+Obj *NewObj(Type *type) {
+    Obj *new = calloc(1, sizeof(Obj));
     new->type = type;
     return new;
 }
 
-void AddVar2Vec(Var *var, vector *vec) {
-    Var *cur = (Var*)GetVecLast(vec);
+Obj *NewLVar(Token *tok, Type *type) {
+    Obj *new = NewObj(type);
+    new->name = strndup(tok->str, tok->len);
+    new->name_len = tok->len;
+    new->tok = tok;
+    new->is_local = true;
+    return new;
+}
+
+void AddVar2Vec(Obj *var, vector *vec) {
+    Obj *cur = (Obj*)GetVecLast(vec);
     var->offset = cur->offset + var->type->size;
     PushVec(vec, var);
 }
 
-Var *FindVar(vector *vec, Token *tok) {
+Obj *FindVar(vector *vec, Token *tok) {
     //p_tk(tok);
     for (int i = 0; i < vec->len; i++) {
-        if (((Var*)vec->data[i])->len == tok->len
-        && memcmp(tok->str, ((Var*)vec->data[i])->name, ((Var*)vec->data[i])->len) == 0) {
-            return (Var*)vec->data[i];
+        Obj *var = (Obj*)GetVecAt(vec, i);
+        if (var->name_len == tok->len
+        && memcmp(tok->str, var->name, var->name_len) == 0) {
+            return var;
         }
-        //p_var((Var*)vec->data[i]);
     }
     return NULL;
+}
+
+Obj *NewFunc(Token *tok, Type *type) {
+    Obj *new = NewObj(type);
+    new->is_func = true;
+    new->name = strndup(tok->str, tok->len);
+    new->name_len = tok->len;
+    new->tok = tok;
+    new->lvar = NewVec();
+    new->param = NewVec();
+    PushVec(new->lvar, NewObj(NULL));
+    PushVec(new->param, NewObj(NULL));
+    return new;
 }
