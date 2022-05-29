@@ -43,6 +43,7 @@ def main():
     test_compiler("int fib(int n) {return n;} int main() {return fib(2);}", 2)
     test_compiler("int main() {int *a;int x; x = 10; a= &x;return *a;}", 10)
     test_compiler("int main() {int *a;int x; x = 5; a= &x;*a = 10;return *a;}", 10)
+    
     test_complie_2("""int main() {int *p;
     p = alloc4(&p, 1, 2, 4, 8);
     int *q;
@@ -51,7 +52,7 @@ def main():
     q = p +3;
     return *q;
     }""", 8)
-
+    test_compiler("int main() {int a[2];*(a+1) = 2;return *(a+1);}", 2)
     print("===================================================================")
 
 if __name__ == '__main__':

@@ -224,7 +224,7 @@ static Node *new_add(Node *lhs, Node *rhs) {
         return NewNodeBinary(ND_ADD, lhs, rhs);
 
     // Canonicalize `num + ptr` to `ptr + num`.
-    if (lhs->type->ty == INT && rhs->type->ty == PTR) {
+    if (lhs->type->ty == INT && (rhs->type->ty == PTR || rhs->type->ty == ARRAY)) {
         Node *tmp = lhs;
         lhs = rhs;
         rhs = tmp;
@@ -301,9 +301,8 @@ static Node *primary() {
 
     Token *tok = ConsumeTokenIndent();
     if (tok) {
-        Node *node = calloc(1, sizeof(Node));
         if (!is_same(tok->next->str, "(")){
-            node->kind = ND_LVAR;
+            Node *node = NewNode(ND_LVAR);
         
             Obj *var = FindVar(cur_fn->lvar, tok);
             if (var) {
@@ -314,7 +313,7 @@ static Node *primary() {
             }
             return node;
         } else {
-            node->kind = ND_FUNCALL;
+            Node *node = NewNode(ND_FUNCALL);
             node->fn_name = strndup(tok->str, tok->len); 
             ExpectToken("(");
             if (!ConsumeToken(")")) {
