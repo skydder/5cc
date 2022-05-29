@@ -91,11 +91,15 @@ Obj *NewObj(Type *type) {
     return new;
 }
 
-Obj *NewLVar(Token *tok, Type *type) {
+Obj *NewObjTok(Type *type, Token *tok) {
     Obj *new = NewObj(type);
     new->name = strndup(tok->str, tok->len);
     new->name_len = tok->len;
     new->tok = tok;
+    return new;
+}
+Obj *NewLVar(Token *tok, Type *type) {
+    Obj *new = NewObjTok(type, tok);
     new->is_local = true;
     return new;
 }
@@ -119,11 +123,8 @@ Obj *FindVar(vector *vec, Token *tok) {
 }
 
 Obj *NewFunc(Token *tok, Type *type) {
-    Obj *new = NewObj(type);
+    Obj *new = NewObjTok(type, tok);
     new->is_func = true;
-    new->name = strndup(tok->str, tok->len);
-    new->name_len = tok->len;
-    new->tok = tok;
     new->lvar = NewVec();
     new->param = NewVec();
     PushVec(new->lvar, NewObj(NULL));
