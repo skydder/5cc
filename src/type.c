@@ -68,6 +68,9 @@ void AddType(Node *node) {
             }
             if (node->lhs->type != ty_int && node->rhs->type != ty_int)
                 error("you can't add ptr to ptr\n");
+        case ND_DEREF:
+            node->type = node->lhs->type->ptr_to;
+            return;
         default:
             return;
     }

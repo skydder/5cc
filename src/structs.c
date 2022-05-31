@@ -32,6 +32,7 @@ Node *NewNodeUnary(NodeKind kind, Node *expr) {
 Node *NewNodeNum(int val) {
     Node *node = NewNode(ND_NUM);
     node->val = val;
+    node->type = ty_int;
     return node;
 }
 
@@ -48,38 +49,46 @@ Token *NewToken(TokenKind kind, Token *cur, char *str, int len) {
 }
 
 bool ConsumeToken(char *str) {
-    if (token->kind != TK_SYMBOL || strlen(str) != token->len || memcmp(token->str, str, token->len)){
+    if (gToken->kind != TK_SYMBOL || strlen(str) != gToken->len || memcmp(gToken->str, str, gToken->len)){
         return false;
     }
-    token = token->next;
+    gToken = gToken->next;
     return true;
 }
 
 Token *ConsumeTokenIndent() {
-    if (token->kind != TK_IDENT) {
+    if (gToken->kind != TK_IDENT) {
         return NULL;
     }
-    Token *tok = token;
-    token = token->next;
+    Token *tok = gToken;
+    gToken = gToken->next;
     return tok;
 }
 
+TokenKind SeekTokenAt(int index) {
+    Token *cur = gToken;
+    for (int i = 0; i < index; i++) {
+        cur = cur->next;
+    }
+    return cur->kind;
+}
+
 void ExpectToken(char *op) {
-    if (token->kind == TK_IDENT || strlen(op) != token->len || memcmp(token->str, op, token->len))
-        error_at(token->str, "'%s'ではありません", op);
-    token = token->next;
+    if (gToken->kind == TK_IDENT || strlen(op) != gToken->len || memcmp(gToken->str, op, gToken->len))
+        error_at(gToken->str, "'%s'ではありません", op);
+    gToken = gToken->next;
 }
 
 int ExpectTokenNum() {
-    if (token->kind != TK_NUM) 
-	    error_at(token->str, "数ではありません");
-    int val = token->val;
-    token = token->next;
+    if (gToken->kind != TK_NUM) 
+	    error_at(gToken->str, "数ではありません");
+    int val = gToken->val;
+    gToken = gToken->next;
     return val;
 }
 
 bool IsTokenAtEof() {
-    return token->kind == TK_EOF;
+    return gToken->kind == TK_EOF;
 }
 
 //===================================================================
@@ -91,15 +100,15 @@ Obj *NewObj(Type *type) {
     return new;
 }
 
-Obj *NewObjTok(Type *type, Token *tok) {
-    Obj *new = NewObj(type);
-    new->name = strndup(tok->str, tok->len);
-    new->name_len = tok->len;
-    new->tok = tok;
-    return new;
+void AddObjTok(Obj *obj, Token *tok) {
+    obj->name = strndup(tok->str, tok->len);
+    obj->name_len = tok->len;
+    obj->tok = tok;
 }
+
 Obj *NewLVar(Token *tok, Type *type) {
-    Obj *new = NewObjTok(type, tok);
+    Obj *new = NewObj(type);
+    AddObjTok(new, tok);
     new->is_local = true;
     return new;
 }
@@ -123,7 +132,8 @@ Obj *FindVar(vector *vec, Token *tok) {
 }
 
 Obj *NewFunc(Token *tok, Type *type) {
-    Obj *new = NewObjTok(type, tok);
+    Obj *new = NewObj(type);
+    AddObjTok(new, tok);
     new->is_func = true;
     new->lvar = NewVec();
     new->param = NewVec();

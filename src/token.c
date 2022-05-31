@@ -17,7 +17,7 @@ static bool is_reserved(char *string, char *reserved) {
     return (is_same(string, reserved) && !is_alnum(string[strlen(reserved)]));
 }
 
-Token *token;
+Token *gToken;
 
 static struct {
     TokenKind tk;

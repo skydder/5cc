@@ -16,12 +16,14 @@ static int count(void) {
 }
 
 static void load() {
+    comment("load");
     pop("rax");
     mov("rax", "[rax]");
     push("rax");
     endl();
 }
 static void store() {
+    comment("store");
     pop("rdi");
     pop("rax");
     mov("[rax]","rdi");
@@ -35,7 +37,6 @@ static void gen_addr(Node *node) {
         return;
     }
     if (node->kind == ND_LVAR) {
-        comment("-addr");
         lea("rax", f("[rbp - %d]", node->offset)); // => lea rax, [rbp - (offset)]
         push("rax");
         endl();
@@ -104,6 +105,7 @@ static void gen_expr(Node *node) {
 
     pop("rdi");
     pop("rax");
+    endl();
 
     switch (node->kind){
         case ND_ADD:
@@ -149,19 +151,22 @@ static void gen_expr(Node *node) {
             printf("\tmovzb rax, al\n");
             break;
     }
-
+    endl();
     push("rax");
+    endl();
 }
 
 static void gen_stmt(Node *node, char *name) {
     switch (node->kind) {
         case ND_RETURN:
+            comment("return");
             gen_expr(node->lhs);
             pop("rax");
             jmp(f(".L.%s.return", name));
             return;
 
         case ND_EXPR_STMT:
+            comment("expr_stmt");
             gen_expr(node->lhs);
             return;
 
@@ -247,8 +252,8 @@ static void gen_func(Obj *fn){
 void codegen() {
     printf(".intel_syntax noprefix\n");
 
-    for (int i = 0; i < funcs->len; i++) {
-        gen_func(funcs->data[i]);
+    for (int i = 0; i < gFuncs->len; i++) {
+        gen_func(gFuncs->data[i]);
     }
 
     return;

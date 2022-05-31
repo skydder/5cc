@@ -6,10 +6,11 @@
 
 #include "5cc.h"
 
- Obj *cur_fn;
+
 
 //===================================================================
 Obj *func();
+Obj *cur_fn;
 static Node *stmt();
 static Node *block();
 static Node *expr_stmt();
@@ -24,12 +25,12 @@ static Node *primary();
 static Node *null_stmt();
 //===================================================================
 
-vector *funcs;  // <obj*>
+vector *gFuncs;  // <obj*>
 
 void program() {
-    funcs = NewVec();
+    gFuncs = NewVec();
     while (!IsTokenAtEof()) {
-        PushVec(funcs, func());
+        PushVec(gFuncs, func());
     }
 }
 
@@ -80,7 +81,7 @@ void declartion() {
 
 static Node *stmt() {
     Node *node;
-    switch (token->kind) {
+    switch (gToken->kind) {
         case TK_RETURN:
             node = NewNode(ND_RETURN);
             ExpectToken("return");
@@ -308,8 +309,9 @@ static Node *primary() {
             if (var) {
                 node->offset = var->offset;
                 node->lvar = var;
+                node->type = var->type;
             } else {
-                error_at(token->str,"変数が定義されていません");
+                error_at(gToken->str,"変数が定義されていません");
             }
             return node;
         } else {

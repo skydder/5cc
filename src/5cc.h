@@ -14,6 +14,11 @@ typedef struct {
     int capacity;
 } vector;
 
+typedef struct Token Token;
+typedef struct Node Node;
+typedef struct obj Obj;
+typedef struct Type Type;
+
 typedef enum {
     TK_SYMBOL,
     TK_IDENT,
@@ -28,7 +33,6 @@ typedef enum {
     TK_EOF,
 } TokenKind;
 
-typedef struct Token Token;
 struct Token {
     TokenKind kind;
     Token *next;
@@ -36,11 +40,10 @@ struct Token {
     char *str;
     int len;
 };
-typedef struct Type Type;
 
 struct Type {
     enum { INT, PTR, ARRAY } ty;
-    struct Type *ptr_to;
+    Type *ptr_to;
     int size;
     int array_size;
 };
@@ -71,9 +74,6 @@ typedef enum {
     ND_NULL,
 } NodeKind;
 
-
-typedef struct obj Obj;
-typedef struct Node Node;
 struct Node {
     NodeKind kind;
 
@@ -117,7 +117,7 @@ struct obj {
 //===================================================================
 // util.c
 //===================================================================
-extern char *user_input;
+extern char *gUserInput;
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 bool is_same(char *string, char *word);
@@ -156,19 +156,19 @@ Type *BaseType();
 void AddType(Node *node);
 Type *NewType(int tk, int size);
 Type *NewTypeArray(Type *ty, int size);
-
+extern Type *ty_int;
 //===================================================================
 // token.c
 //===================================================================
-extern Token *token;
+extern Token *gToken;
 Token *tokenize(char *p);
 //===================================================================
 // parser.c
 //===================================================================
 //extern Function *code[100];
-extern vector *funcs;
+extern vector *gFuncs;
 void program();
-extern Obj *fnc;
+extern Obj *gFnc;
 //===================================================================
 // codegen.c
 //===================================================================
