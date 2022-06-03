@@ -6,7 +6,7 @@
 
 #include "5cc.h"
 
-
+vector *gFuncs;  // <obj*>
 
 //===================================================================
 Obj *func();
@@ -24,8 +24,6 @@ static Node *unary();
 static Node *primary();
 static Node *null_stmt();
 //===================================================================
-
-vector *gFuncs;  // <obj*>
 
 void program() {
     gFuncs = NewVec();
@@ -302,19 +300,7 @@ static Node *primary() {
 
     Token *tok = ConsumeTokenIndent();
     if (tok) {
-        if (!is_same(tok->next->str, "(")){
-            Node *node = NewNode(ND_LVAR);
-        
-            Obj *var = FindVar(cur_fn->lvar, tok);
-            if (var) {
-                node->offset = var->offset;
-                node->lvar = var;
-                node->type = var->type;
-            } else {
-                error_at(gToken->str,"変数が定義されていません");
-            }
-            return node;
-        } else {
+        if (PeekTokenAt(0, "(")){
             Node *node = NewNode(ND_FUNCALL);
             node->fn_name = strndup(tok->str, tok->len); 
             ExpectToken("(");
@@ -324,7 +310,18 @@ static Node *primary() {
                     ExpectToken(",");
                     i->next = expr();
                 }
-                
+            }
+            return node;
+        } else {
+            Node *node = NewNode(ND_LVAR);
+        
+            Obj *var = FindVar(cur_fn->lvar, tok);
+            if (var) {
+                node->offset = var->offset;
+                node->lvar = var;
+                node->type = var->type;
+            } else {
+                error_at(gToken->str,"変数が定義されていません");
             }
             return node;
         }

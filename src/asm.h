@@ -58,9 +58,12 @@ inline void label(char* label) {
 inline void comment(char* str) {
     printf("#%s\n",str);
 }
-
+void CmpSetMov(char* dst, char* src,char* set_flag);
 char* f(char* str, ...);
+void j(char* label, char* jmp_flag);
 inline void endl() {
     printf("\n");
 }
+
+
 #endif

@@ -65,12 +65,14 @@ Token *ConsumeTokenIndent() {
     return tok;
 }
 
-TokenKind SeekTokenAt(int index) {
+bool PeekTokenAt(int index, char *op) {
     Token *cur = gToken;
     for (int i = 0; i < index; i++) {
         cur = cur->next;
     }
-    return cur->kind;
+    if (cur->kind == TK_IDENT || strlen(op) != cur->len || !is_same(cur->str, op))
+        return false;
+    return true;
 }
 
 void ExpectToken(char *op) {

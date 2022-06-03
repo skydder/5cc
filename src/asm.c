@@ -20,6 +20,15 @@ extern inline void ret();
 extern inline void label(char* label);
 extern inline void comment(char* str);
 
+void CmpSetMov(char* dst, char* src,char* set_flag) {
+    cmp(dst, src);
+    printf("\tset%s al\n", set_flag);
+    printf("\tmovzb rax, al\n");
+    return;
+}
+void j(char* label, char* jmp_flag) {
+    printf("\tj%s %s\n", jmp_flag, label);
+}
 char* f(char* str, ...){
     char buf[2048];
     va_list ap;

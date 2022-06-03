@@ -142,6 +142,7 @@ Token *ConsumeTokenIndent();
 void ExpectToken(char *op);
 int ExpectTokenNum();
 bool IsTokenAtEof();
+bool PeekTokenAt(int index, char *op);
 
 Obj *NewObj(Type *type);
 Obj *NewLVar(Token *tok, Type *type);
@@ -165,7 +166,6 @@ Token *tokenize(char *p);
 //===================================================================
 // parser.c
 //===================================================================
-//extern Function *code[100];
 extern vector *gFuncs;
 void program();
 extern Obj *gFnc;

@@ -85,7 +85,7 @@ static void gen_expr(Node *node) {
             mov("rax", "rsp");
             
             printf("\ttest rax, 15\n");
-            printf("\tjnz .L.call.%d\n", c);
+            j(f(".L.call.%d", c), "nz");
             mov("rax", "0");
             call(f("%s", node->fn_name));
             jmp(f(".L.end.%d", c));
@@ -121,34 +121,22 @@ static void gen_expr(Node *node) {
             idiv("rdi");
             break;
         case ND_LT://<
-            cmp("rax", "rdi");
-            printf("\tsetl al\n");
-            printf("\tmovzb rax, al\n");
+            CmpSetMov("rax", "rdi", "l");
             break;
         case ND_LTE://<=
-            cmp("rax", "rdi");
-            printf("\tsetle al\n");
-            printf("\tmovzb rax, al\n");
+            CmpSetMov("rax", "rdi", "le");
             break;
         case ND_GT://>
-            cmp("rdi", "rax");
-            printf("\tsetl al\n");
-            printf("\tmovzb rax, al\n");
+            CmpSetMov("rdi", "rax", "l");
             break;
         case ND_GTE://>=
-            cmp("rdi", "rax");
-            printf("\tsetle al\n");
-            printf("\tmovzb rax, al\n");
+            CmpSetMov("rdi", "rax", "le");
             break;
         case ND_EQ://==
-            cmp("rax", "rdi");
-            printf("\tsete al\n");
-            printf("\tmovzb rax, al\n");
+            CmpSetMov("rax", "rdi", "e");
             break;
         case ND_NEQ://!=
-            cmp("rax", "rdi");
-            printf("\tsetne al\n");
-            printf("\tmovzb rax, al\n");
+            CmpSetMov("rax", "rdi", "ne");
             break;
     }
     endl();
@@ -179,7 +167,7 @@ static void gen_stmt(Node *node, char *name) {
                 gen_expr(node->cond);
                 pop("rax");
                 cmp("rax", "0");
-                printf("\t je .L.end.%d\n", c);
+                j(f(".L.end.%d", c), "e");
             }
             gen_stmt(node->then, name);
             if (node->inc)
@@ -194,7 +182,7 @@ static void gen_stmt(Node *node, char *name) {
             gen_expr(node->cond);
             pop("rax");
             cmp("rax", "0");
-            printf("\tje  .L.else.%d\n", c);
+            j(f(".L.else.%d", c), "e");
             gen_stmt(node->then, name);
             jmp(f(".L.end.%d", c));
             label(f(".L.else.%d", c));
@@ -210,7 +198,7 @@ static void gen_stmt(Node *node, char *name) {
             gen_expr(node->cond);
             pop("rax");
             cmp("rax", "0");
-            printf("\tje  .L.end.%d\n", c);
+            j(f(".L.end.%d", c), "e");
             gen_stmt(node->then, name);
             jmp(f(".L.begin.%d", c));
             label(f(".L.end.%d", c));
