@@ -58,12 +58,18 @@ inline void label(char* label) {
 inline void comment(char* str) {
     printf("#%s\n",str);
 }
-void CmpSetMov(char* dst, char* src,char* set_flag);
-char* f(char* str, ...);
-void j(char* label, char* jmp_flag);
+inline void CmpSetMov(char* dst, char* src,char* set_flag) {
+    cmp(dst, src);
+    printf("\tset%s al\n", set_flag);
+    printf("\tmovzb rax, al\n");
+    return;
+}
+inline void j(char* label, char* jmp_flag) {
+    printf("\tj%s %s\n", jmp_flag, label);
+}
 inline void endl() {
     printf("\n");
 }
-
+char* f(char* str, ...);
 
 #endif

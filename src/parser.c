@@ -23,6 +23,7 @@ static Node *mul();
 static Node *unary();
 static Node *primary();
 static Node *null_stmt();
+static Node *array_index();
 //===================================================================
 
 void program() {
@@ -274,7 +275,7 @@ static Node *mul() {
 |*/
 static Node *unary() {
     if (ConsumeToken("+"))
-        return primary();
+        return array_index();
     if (ConsumeToken("-"))
         return NewNodeBinary(ND_SUB, NewNodeNum(0), unary());
     if (ConsumeToken("&"))
@@ -283,9 +284,19 @@ static Node *unary() {
         return NewNodeUnary(ND_DEREF, unary());
     if (ConsumeToken("sizeof"))
         return NewNodeNum(8);  // <= return type size
-    return primary();
+    return array_index();
 }
 
+Node *array_index() {
+    Node *lhs = primary();
+    if (ConsumeToken("[")) {
+        Node *rhs = expr();
+        ExpectToken("]");
+        Node *node = NewNodeUnary(ND_DEREF, new_add(lhs, rhs));
+        return node;
+    }
+    return lhs;
+}
 /*
 |* primary = "(" expr ")"                                   
 |*           | indent
@@ -297,7 +308,7 @@ static Node *primary() {
         ExpectToken(")");
         return node;
     }
-
+    
     Token *tok = ConsumeTokenIndent();
     if (tok) {
         if (PeekTokenAt(0, "(")){

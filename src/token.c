@@ -58,7 +58,7 @@ static Token *tk_reserved(char **p, Token* cur) {
     return tok;
 }
 
-Token *tokenize(char *p) {
+Token *Tokenize(char *p) {
     Token head;
     head.next = NULL;
     Token *cur = &head;

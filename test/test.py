@@ -59,6 +59,8 @@ def main():
     test_compiler("int main() {int a[2];*a = 1;*(a + 1) = 2;int *p;p = a;return *p + *(p + 1);}", 3)
     test_compiler("int main() {int *a;int *p;int x; int y;x=1;y=2;a = &x;p = &y;return *p + *a;}", 3)
     test_compiler("int main() {int *a;int x; x = 5; a= &x;*a = 10;return *a;}", 10)
+    test_compiler("int main() {int a[2];a[1] = 2;return a[1];}", 2)
+    test_compiler("int main() {int a[9];a[1] = 2;return a[1];}", 2)
     print("===================================================================")
 
 if __name__ == '__main__':

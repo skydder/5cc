@@ -19,16 +19,10 @@ extern inline void jmp(char* dst);
 extern inline void ret();
 extern inline void label(char* label);
 extern inline void comment(char* str);
+extern inline void CmpSetMov(char* dst, char* src,char* set_flag);
+extern inline void j(char* label, char* jmp_flag);
+extern inline void endl();
 
-void CmpSetMov(char* dst, char* src,char* set_flag) {
-    cmp(dst, src);
-    printf("\tset%s al\n", set_flag);
-    printf("\tmovzb rax, al\n");
-    return;
-}
-void j(char* label, char* jmp_flag) {
-    printf("\tj%s %s\n", jmp_flag, label);
-}
 char* f(char* str, ...){
     char buf[2048];
     va_list ap;
@@ -37,4 +31,3 @@ char* f(char* str, ...){
     va_end(ap);
     return strdup(buf);
 }
-extern inline void endl();
