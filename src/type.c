@@ -47,6 +47,7 @@ void AddType(Node *node) {
     for (Node *n = node->body; n; n = n->next)
         AddType(n);
     switch (node->kind) {
+        case ND_MUL:
         case ND_NUM:
             node->type = ty_int;
             return;

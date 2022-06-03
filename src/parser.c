@@ -292,8 +292,7 @@ Node *array_index() {
     if (ConsumeToken("[")) {
         Node *rhs = expr();
         ExpectToken("]");
-        Node *node = NewNodeUnary(ND_DEREF, new_add(lhs, rhs));
-        return node;
+        return NewNodeUnary(ND_DEREF, new_add(lhs, rhs));
     }
     return lhs;
 }
