@@ -183,18 +183,18 @@ static void gen(Node *node) {
         case ND_SUB:
             sub("rax", "rdi");
             break;
-        case ND_PTR_ADD:
-            imul("rax", f("%d", SizeOfType(node->type->ptr_to)));
-            add("rax", "rdi");
-            break;
-        case ND_PTR_SUB:
-            imul("rax", f("%d", SizeOfType(node->type->ptr_to)));
-            sub("rax", "rdi");
-            break;
-        case ND_PTR_DIFF:
-            sub("rax", "rdi");
-            idiv("rdi");
-            break;;
+        // case ND_PTR_ADD:
+        //     imul("rax", f("%d", SizeOfType(node->type->ptr_to)));
+        //     add("rax", "rdi");
+        //     break;
+        // case ND_PTR_SUB:
+        //     imul("rax", f("%d", SizeOfType(node->type->ptr_to)));
+        //     sub("rax", "rdi");
+        //     break;
+        // case ND_PTR_DIFF:
+        //     sub("rax", "rdi");
+        //     idiv("rdi");
+        //     break;;
         case ND_MUL:
             imul("rax", "rdi");
             break;

@@ -47,26 +47,23 @@ void params(Obj *func) {
 }
 
 Obj *func(){
-    Obj *fnc = NewFunc(ConsumeTokenIndent(), BaseType());
-    if (fnc->tok) {
-        cur_fn = fnc;
-        ExpectToken("(");
-        if (!ConsumeToken(")")) {
-            params(fnc);
-        }
+    Obj *fnc = NewFunc(ExpectTokenIndent(), BaseType());
 
-        ExpectToken("{");
-        fnc->body = block(); 
-    } else {
-        fnc = NULL;
+    cur_fn = fnc;
+    ExpectToken("(");
+    if (!ConsumeToken(")")) {
+        params(fnc);
     }
+
+    ExpectToken("{");
+    fnc->body = block(); 
     return fnc;
 }
 
 
 void declartion() {
     Type *type = BaseType();
-    Token *tok = ConsumeTokenIndent();
+    Token *tok = ExpectTokenIndent();
     if (ConsumeToken("[")) {
         type  = NewTypeArray(type, ExpectTokenNum());
         ExpectToken("]");
@@ -310,10 +307,9 @@ static Node *primary() {
     
     Token *tok = ConsumeTokenIndent();
     if (tok) {
-        if (PeekTokenAt(0, "(")){
+        if (ConsumeToken("(")){
             Node *node = NewNode(ND_FUNCALL);
             node->fn_name = strndup(tok->str, tok->len); 
-            ExpectToken("(");
             if (!ConsumeToken(")")) {
                 node->arg = expr();
                 for (Node *i = node->arg; !ConsumeToken(")"); i = i->next){

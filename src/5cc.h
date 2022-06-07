@@ -141,6 +141,7 @@ bool ConsumeToken(char *str);
 Token *ConsumeTokenIndent();
 void ExpectToken(char *op);
 int ExpectTokenNum();
+Token *ExpectTokenIndent();
 bool IsTokenAtEof();
 bool PeekTokenAt(int index, char *op);
 

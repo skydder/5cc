@@ -81,6 +81,12 @@ void ExpectToken(char *op) {
     gToken = gToken->next;
 }
 
+Token *ExpectTokenIndent() {
+    Token *tok = ConsumeTokenIndent();
+    if (!tok)
+        error_at(gToken->str, "not indent");
+    return tok;
+}
 int ExpectTokenNum() {
     if (gToken->kind != TK_NUM) 
 	    error_at(gToken->str, "数ではありません");
